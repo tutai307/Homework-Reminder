@@ -28,23 +28,6 @@ class SubjectSeeder extends Seeder
             ['name' => 'Thể dục', 'code' => 'TD'],
             ['name' => 'Mỹ thuật', 'code' => 'MT'],
             ['name' => 'Âm nhạc', 'code' => 'AM'],
-            
-            // Môn học chuyên sâu (THPT)
-            ['name' => 'Toán nâng cao', 'code' => 'TOANNC'],
-            ['name' => 'Vật lý nâng cao', 'code' => 'VATLYNC'],
-            ['name' => 'Hóa học nâng cao', 'code' => 'HOAHOCNC'],
-            ['name' => 'Sinh học nâng cao', 'code' => 'SINHNC'],
-            ['name' => 'Ngữ văn nâng cao', 'code' => 'NGUVANNC'],
-            ['name' => 'Lịch sử nâng cao', 'code' => 'LSNC'],
-            ['name' => 'Địa lý nâng cao', 'code' => 'DLNC'],
-            
-            // Môn học tự chọn
-            ['name' => 'Tiếng Pháp', 'code' => 'TP'],
-            ['name' => 'Tiếng Nhật', 'code' => 'TJ'],
-            ['name' => 'Tiếng Trung', 'code' => 'TT'],
-            ['name' => 'Tiếng Hàn', 'code' => 'TH'],
-            ['name' => 'Khoa học máy tính', 'code' => 'KHTM'],
-            ['name' => 'Kinh tế', 'code' => 'KT'],
         ];
 
         foreach ($subjects as $subject) {

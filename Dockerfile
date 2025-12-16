@@ -30,5 +30,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Cài package PHP
 RUN composer install --no-dev --optimize-autoloader
+RUN php artisan migrate --force || true
+RUN php artisan storage:link || true
 
 EXPOSE 80

@@ -60,9 +60,9 @@
                             $existingItem = $existingHomework ? $existingHomework->items->where('subject_id', $subject->id)->first() : null;
                         @endphp
                         <div class="col-md-6 col-lg-4">
-                            <div class="period-box card h-100" data-period="{{ $period }}" data-subject-id="{{ $subject->id }}" data-bs-toggle="collapse" data-bs-target="#period-{{ $period }}-{{ $subject->id }}" role="button" aria-expanded="false">
+                            <div class="period-box card h-100" data-period="{{ $period }}" data-subject-id="{{ $subject->id }}">
                                 <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 period-header" data-bs-toggle="collapse" data-bs-target="#period-{{ $period }}-{{ $subject->id }}" role="button" aria-expanded="false" style="cursor: pointer;">
                                         <h6 class="mb-0">
                                             <span class="badge bg-primary me-2">Tiết {{ $period }}</span>
                                             <strong>{{ $subject->name }}</strong>
@@ -155,16 +155,12 @@
         color: #6c757d;
     }
     
-    .period-box[aria-expanded="true"] .toggle-icon {
+    .period-header[aria-expanded="true"] .toggle-icon {
         transform: rotate(180deg);
     }
     
-    .period-box .collapse {
-        pointer-events: none;
-    }
-    
-    .period-box .collapse.show {
-        pointer-events: auto;
+    .period-header {
+        user-select: none;
     }
     
     .collapse.show {
@@ -193,17 +189,30 @@
             if (textarea && textarea.value.trim() !== '') {
                 const collapseId = box.querySelector('.collapse').id;
                 const collapseElement = document.getElementById(collapseId);
+                const header = box.querySelector('.period-header');
                 const bsCollapse = new bootstrap.Collapse(collapseElement, {
                     toggle: true
                 });
-                box.setAttribute('aria-expanded', 'true');
+                if (header) {
+                    header.setAttribute('aria-expanded', 'true');
+                }
             }
         });
         
-        // Ngăn chặn click vào form elements bên trong dropdown trigger collapse
+        // Cập nhật aria-expanded khi collapse mở/đóng
         document.querySelectorAll('.period-box .collapse').forEach(collapse => {
-            collapse.addEventListener('click', function(e) {
-                e.stopPropagation();
+            collapse.addEventListener('show.bs.collapse', function() {
+                const header = this.closest('.period-box').querySelector('.period-header');
+                if (header) {
+                    header.setAttribute('aria-expanded', 'true');
+                }
+            });
+            
+            collapse.addEventListener('hide.bs.collapse', function() {
+                const header = this.closest('.period-box').querySelector('.period-header');
+                if (header) {
+                    header.setAttribute('aria-expanded', 'false');
+                }
             });
         });
     });

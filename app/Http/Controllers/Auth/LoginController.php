@@ -33,10 +33,12 @@ class LoginController extends Controller
             // Redirect theo role
             $user = Auth::user();
             if ($user->isAdmin()) {
-                return redirect()->intended(route('admin.dashboard'));
+                return redirect()->intended(route('admin.dashboard'))
+                    ->with('success', 'Đăng nhập thành công! Chào mừng bạn trở lại.');
             } else {
                 // Giáo viên và lớp trưởng redirect về trang bài tập hàng ngày
-                return redirect()->intended(route('teacher.daily-homework.index'));
+                return redirect()->intended(route('teacher.daily-homework.index'))
+                    ->with('success', 'Đăng nhập thành công! Chào mừng bạn trở lại.');
             }
         }
 

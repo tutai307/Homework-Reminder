@@ -184,7 +184,8 @@ class DailyHomeworkController extends Controller
 
     /**
      * Get Zalo message format for a specific date.
-     * Lấy bài tập cần làm hôm sau và hôm sau nữa (không phải hôm nay).
+     * Logic: Tìm tất cả các bài tập có hạn nộp là ngày hôm sau,
+     * sau đó lấy ra các bài tập cần làm trong ngày hôm đó (ngày hôm sau).
      */
     public function getZaloMessage(Request $request)
     {
@@ -232,30 +233,62 @@ class DailyHomeworkController extends Controller
         $selectedDate = \Carbon\Carbon::parse($request->date);
         $includeDayAfterNext = $request->boolean('include_day_after_next', false);
         
-        // Lấy bài tập cho ngày hôm sau (từ ngày được chọn)
+        // Ngày hôm sau và ngày hôm sau nữa
         $nextDate = $selectedDate->copy()->addDay();
         $nextDateStr = $nextDate->format('Y-m-d');
+        
+        $dayAfterNextDate = null;
+        $dayAfterNextDateStr = null;
+        if ($includeDayAfterNext) {
+            $dayAfterNextDate = $selectedDate->copy()->addDays(2);
+            $dayAfterNextDateStr = $dayAfterNextDate->format('Y-m-d');
+        }
         
         // Lấy lớp để lấy thời khóa biểu
         $class = ClassModel::findOrFail($classId);
         
-        // Lấy bài tập cho ngày hôm sau
-        $nextDayHomework = Homework::where('class_id', $classId)
-            ->where('date', $nextDateStr)
-            ->with(['items.subject'])
-            ->first();
+        // Tìm tất cả các bài tập có hạn nộp là ngày hôm sau (không quan trọng homework.date là gì)
+        // Ví dụ: Thứ 4 giao bài, hạn nộp thứ 6 → thứ 5 lấy tin nhắn sẽ thấy bài tập có hạn thứ 6
+        $nextDayItems = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId) {
+                $query->where('class_id', $classId);
+            })
+            ->where('due_date', $nextDateStr)
+            ->with(['subject', 'homework'])
+            ->get();
         
-        // Lấy bài tập cho ngày hôm sau nữa (nếu có yêu cầu)
-        $dayAfterNextHomework = null;
-        $dayAfterNextDate = null;
-        if ($includeDayAfterNext) {
-            $dayAfterNextDate = $selectedDate->copy()->addDays(2);
-            $dayAfterNextDateStr = $dayAfterNextDate->format('Y-m-d');
+        // Lấy các bài tập cần làm trong ngày hôm sau (homework.date = ngày hôm sau)
+        // Gộp với các bài tập có hạn nộp là ngày hôm sau
+        $itemsToDoNextDay = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId, $nextDateStr) {
+                $query->where('class_id', $classId)
+                      ->where('date', $nextDateStr);
+            })
+            ->with(['subject', 'homework'])
+            ->get();
+        
+        // Gộp tất cả: bài tập có hạn nộp là ngày hôm sau + bài tập cần làm trong ngày hôm sau
+        $nextDayItems = $nextDayItems->merge($itemsToDoNextDay)->unique('id');
+        
+        // Nếu có checkbox, cũng lấy bài tập có hạn nộp là ngày hôm sau nữa
+        $dayAfterNextItems = collect();
+        if ($includeDayAfterNext && $dayAfterNextDateStr) {
+            // Tìm tất cả bài tập có hạn nộp là ngày hôm sau nữa
+            $itemsWithDueDateDayAfterNext = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId) {
+                    $query->where('class_id', $classId);
+                })
+                ->where('due_date', $dayAfterNextDateStr)
+                ->with(['subject', 'homework'])
+                ->get();
             
-            $dayAfterNextHomework = Homework::where('class_id', $classId)
-                ->where('date', $dayAfterNextDateStr)
-                ->with(['items.subject'])
-                ->first();
+            // Lấy các bài tập cần làm trong ngày hôm sau nữa (homework.date = ngày hôm sau nữa)
+            $itemsToDoDayAfterNext = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId, $dayAfterNextDateStr) {
+                    $query->where('class_id', $classId)
+                          ->where('date', $dayAfterNextDateStr);
+                })
+                ->with(['subject', 'homework'])
+                ->get();
+            
+            // Gộp tất cả: bài tập có hạn nộp là ngày hôm sau nữa + bài tập cần làm trong ngày hôm sau nữa
+            $dayAfterNextItems = $itemsWithDueDateDayAfterNext->merge($itemsToDoDayAfterNext)->unique('id');
         }
 
         // Lấy thời khóa biểu để sắp xếp theo tiết
@@ -280,7 +313,7 @@ class DailyHomeworkController extends Controller
         }
 
         // Format tin nhắn
-        $message = $this->formatZaloMessageForUpcoming($nextDayHomework, $dayAfterNextHomework, $nextDate, $dayAfterNextDate, $timetables);
+        $message = $this->formatZaloMessageForUpcoming($nextDayItems, $dayAfterNextItems, $nextDate, $dayAfterNextDate, $timetables);
 
         return response()->json([
             'success' => true,
@@ -290,8 +323,9 @@ class DailyHomeworkController extends Controller
 
     /**
      * Format message for Zalo - bài tập cần làm hôm sau và hôm sau nữa (nếu có).
+     * Nhận vào collection của HomeworkItem thay vì Homework objects.
      */
-    private function formatZaloMessageForUpcoming($nextDayHomework, $dayAfterNextHomework = null, $nextDate, $dayAfterNextDate = null, $timetables)
+    private function formatZaloMessageForUpcoming($nextDayItems, $dayAfterNextItems = null, $nextDate, $dayAfterNextDate = null, $timetables)
     {
         $today = now();
         $nextDayNameVi = $this->getDayNameVi($nextDate->dayOfWeek);
@@ -303,21 +337,14 @@ class DailyHomeworkController extends Controller
         $message = "📚 BÀI TẬP CẦN LÀM\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
-        // Xử lý bài tập ngày hôm sau
-        $nextDayItems = collect();
-        if ($nextDayHomework && $nextDayHomework->items->count() > 0) {
-            $nextDayItems = $nextDayHomework->items->filter(function($item) {
-                return !empty($item->content);
-            });
-        }
+        // Lọc các items có nội dung
+        $nextDayItems = $nextDayItems->filter(function($item) {
+            return !empty($item->content);
+        });
         
-        // Xử lý bài tập ngày hôm sau nữa (nếu có)
-        $dayAfterNextItems = collect();
-        if ($dayAfterNextHomework && $dayAfterNextDate && $dayAfterNextHomework->items->count() > 0) {
-            $dayAfterNextItems = $dayAfterNextHomework->items->filter(function($item) {
-                return !empty($item->content);
-            });
-        }
+        $dayAfterNextItems = $dayAfterNextItems ? $dayAfterNextItems->filter(function($item) {
+            return !empty($item->content);
+        }) : collect();
         
         // Gộp tất cả bài tập và sắp xếp
         $allItems = collect();
@@ -334,7 +361,7 @@ class DailyHomeworkController extends Controller
         }
         
         // Thêm bài tập ngày hôm sau nữa (nếu có)
-        if ($dayAfterNextDate) {
+        if ($dayAfterNextDate && $dayAfterNextItems->count() > 0) {
             foreach ($dayAfterNextItems as $item) {
                 $allItems->push([
                     'item' => $item,
@@ -432,6 +459,37 @@ class DailyHomeworkController extends Controller
     {
         $days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
         return $days[$dayOfWeek] ?? '';
+    }
+
+    /**
+     * Tìm ngày của tiết học tiếp theo cho một môn học.
+     * Trả về ngày của tiết học tiếp theo trong thời khóa biểu, bắt đầu từ ngày hôm sau.
+     * Nếu không tìm thấy, trả về ngày hôm sau làm giá trị mặc định.
+     */
+    private function getNextPeriodDateForSubject($classId, $subjectId, $currentDate)
+    {
+        $currentDateObj = \Carbon\Carbon::parse($currentDate);
+        
+        // Tìm trong 7 ngày tiếp theo (1 tuần)
+        for ($i = 1; $i <= 7; $i++) {
+            $checkDate = $currentDateObj->copy()->addDays($i);
+            $weekday = $checkDate->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
+            // Chuyển đổi: Carbon dayOfWeek (0=Sunday) -> DB weekday (1=Monday, 7=Sunday)
+            $dbWeekday = $weekday == 0 ? 7 : $weekday;
+            
+            // Kiểm tra xem môn học này có trong thời khóa biểu của ngày đó không
+            $timetable = Timetable::where('class_id', $classId)
+                ->where('subject_id', $subjectId)
+                ->where('weekday', $dbWeekday)
+                ->first();
+            
+            if ($timetable) {
+                return $checkDate->format('Y-m-d');
+            }
+        }
+        
+        // Nếu không tìm thấy trong 7 ngày, trả về ngày hôm sau làm giá trị mặc định
+        return $currentDateObj->copy()->addDay()->format('Y-m-d');
     }
 
     /**
@@ -553,10 +611,21 @@ class DailyHomeworkController extends Controller
         if (isset($validated['homework']) && is_array($validated['homework'])) {
             foreach ($validated['homework'] as $item) {
                 if (!empty($item['content'])) {
+                    // Nếu không có hạn nộp, tự động đặt là ngày của tiết học tiếp theo
+                    $dueDate = $item['due_date'] ?? null;
+                    if (!$dueDate) {
+                        $nextPeriodDate = $this->getNextPeriodDateForSubject(
+                            $classId,
+                            $item['subject_id'],
+                            $validated['date']
+                        );
+                        $dueDate = $nextPeriodDate;
+                    }
+                    
                     $homework->items()->create([
                         'subject_id' => $item['subject_id'],
                         'content' => $item['content'],
-                        'due_date' => $item['due_date'] ?? null,
+                        'due_date' => $dueDate,
                     ]);
                 }
             }
@@ -639,10 +708,21 @@ class DailyHomeworkController extends Controller
         if (isset($validated['homework']) && is_array($validated['homework'])) {
             foreach ($validated['homework'] as $item) {
                 if (!empty($item['content'])) {
+                    // Nếu không có hạn nộp, tự động đặt là ngày của tiết học tiếp theo
+                    $dueDate = $item['due_date'] ?? null;
+                    if (!$dueDate) {
+                        $nextPeriodDate = $this->getNextPeriodDateForSubject(
+                            $homework->class_id,
+                            $item['subject_id'],
+                            $homework->date->format('Y-m-d')
+                        );
+                        $dueDate = $nextPeriodDate;
+                    }
+                    
                     $homework->items()->create([
                         'subject_id' => $item['subject_id'],
                         'content' => $item['content'],
-                        'due_date' => $item['due_date'] ?? null,
+                        'due_date' => $dueDate,
                     ]);
                 }
             }

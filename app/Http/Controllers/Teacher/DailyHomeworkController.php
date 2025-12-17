@@ -313,7 +313,7 @@ class DailyHomeworkController extends Controller
         }
 
         // Format tin nhắn
-        $message = $this->formatZaloMessageForUpcoming($nextDayItems, $dayAfterNextItems, $nextDate, $dayAfterNextDate, $timetables);
+        $message = $this->formatZaloMessageForUpcoming($nextDayItems, $nextDate, $timetables, $dayAfterNextItems, $dayAfterNextDate);
 
         return response()->json([
             'success' => true,
@@ -325,7 +325,7 @@ class DailyHomeworkController extends Controller
      * Format message for Zalo - bài tập cần làm hôm sau và hôm sau nữa (nếu có).
      * Nhận vào collection của HomeworkItem thay vì Homework objects.
      */
-    private function formatZaloMessageForUpcoming($nextDayItems, $dayAfterNextItems = null, $nextDate, $dayAfterNextDate = null, $timetables)
+    private function formatZaloMessageForUpcoming($nextDayItems, $nextDate, $timetables, $dayAfterNextItems = null, $dayAfterNextDate = null)
     {
         $today = now();
         $nextDayNameVi = $this->getDayNameVi($nextDate->dayOfWeek);

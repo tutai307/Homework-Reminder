@@ -24,7 +24,7 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 60px;">ID</th>
+                            <th style="width: 60px;">STT</th>
                             <th>Tên quyền</th>
                             <th style="width: 150px;" class="text-center">Thao tác</th>
                         </tr>
@@ -32,7 +32,7 @@
                     <tbody>
                         @foreach($permissions as $permission)
                             <tr>
-                                <td><span class="badge bg-secondary">#{{ $permission->id }}</span></td>
+                                <td><span class="badge bg-secondary">{{ $loop->iteration }}</span></td>
                                 <td><strong>{{ $permission->name }}</strong></td>
                                 <td>
                                     <div class="d-flex gap-2 justify-content-center">

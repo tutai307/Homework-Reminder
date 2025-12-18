@@ -104,7 +104,7 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 60px;">ID</th>
+                                <th style="width: 60px;">STT</th>
                                 <th>Tên lớp</th>
                                 <th>Năm học</th>
                                 <th class="text-center">Đã tạo bài tập</th>
@@ -115,7 +115,7 @@
                         <tbody>
                             @foreach($classesStatus as $class)
                                 <tr class="{{ !$class['has_homework'] ? 'table-warning' : '' }}">
-                                    <td><span class="badge bg-secondary">#{{ $class['id'] }}</span></td>
+                                    <td><span class="badge bg-secondary">{{ $loop->iteration }}</span></td>
                                     <td>
                                         <strong class="{{ !$class['has_homework'] ? 'text-danger' : 'text-primary' }}">
                                             {{ $class['name'] }}

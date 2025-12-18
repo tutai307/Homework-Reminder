@@ -24,7 +24,7 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 60px;">ID</th>
+                            <th style="width: 60px;">STT</th>
                             <th>Tên vai trò</th>
                             <th>Quyền</th>
                             <th style="width: 150px;" class="text-center">Thao tác</th>
@@ -33,7 +33,7 @@
                     <tbody>
                         @foreach($roles as $role)
                             <tr>
-                                <td><span class="badge bg-secondary">#{{ $role->id }}</span></td>
+                                <td><span class="badge bg-secondary">{{ $loop->iteration }}</span></td>
                                 <td><strong>{{ $role->name }}</strong></td>
                                 <td>
                                     @if($role->permissions->count() > 0)

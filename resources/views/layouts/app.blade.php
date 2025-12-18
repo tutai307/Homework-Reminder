@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Homework Reminder System')</title>
+
+    <!-- Favicons -->
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta name="theme-color" content="#667eea">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">

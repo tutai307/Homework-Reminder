@@ -17,22 +17,22 @@
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>STT</th>
                             <th>Tên môn học</th>
                             <th>Mã môn</th>
                             <th>Ngày tạo</th>
-                            <th>Thao tác</th>
+                            <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($subjects as $subject)
                             <tr>
-                                <td>{{ $subject->id }}</td>
+                                <td>{{ $loop->iteration }}</td>
                                 <td><strong>{{ $subject->name }}</strong></td>
                                 <td><code>{{ $subject->code }}</code></td>
                                 <td>{{ $subject->created_at->format('d/m/Y') }}</td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="d-flex gap-2 justify-content-center" role="group">
                                         <a href="{{ route('admin.subjects.edit', $subject) }}" class="btn btn-sm btn-outline-primary">
                                             Sửa
                                         </a>

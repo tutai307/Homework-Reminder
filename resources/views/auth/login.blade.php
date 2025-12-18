@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - Homework Reminder System</title>
+    <!-- Favicons -->
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta name="theme-color" content="#667eea">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">

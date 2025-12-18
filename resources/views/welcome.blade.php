@@ -6,6 +6,13 @@
 
         <title>Laravel</title>
 
+        <!-- Favicons -->
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="alternate icon" href="{{ asset('favicon.ico') }}" sizes="any">
+        <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+        <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+        <meta name="theme-color" content="#667eea">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />

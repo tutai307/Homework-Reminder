@@ -24,7 +24,7 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 60px;">ID</th>
+                            <th style="width: 60px;">STT</th>
                             <th>Tên</th>
                             <th>Email</th>
                             <th>Vai trò</th>
@@ -36,7 +36,7 @@
                     <tbody>
                         @foreach($users as $user)
                             <tr>
-                                <td><span class="badge bg-secondary">#{{ $user->id }}</span></td>
+                                <td><span class="badge bg-secondary">{{ $loop->iteration }}</span></td>
                                 <td><strong>{{ $user->name }}</strong></td>
                                 <td>{{ $user->email }}</td>
                                 <td>

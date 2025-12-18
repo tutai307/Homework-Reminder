@@ -17,6 +17,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Public share page for parents/students (timetable + upcoming homework by due_date)
+Route::get('p/{code}', [\App\Http\Controllers\Public\ClassPortalController::class, 'show'])
+    ->name('public.class.portal');
+
 // Auth routes
 Route::get('login', [\App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [\App\Http\Controllers\Auth\LoginController::class, 'login']);

@@ -150,19 +150,11 @@
         user-select: none;
     }
     
-    .collapse.show {
-        animation: slideDown 0.3s ease;
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    /* Let Bootstrap handle the collapse animation to avoid a one-frame "blink"
+       caused by applying opacity:0 when the `.show` class is added. */
+    .period-box .collapse,
+    .period-box .collapsing {
+        will-change: height;
     }
 </style>
 @endpush

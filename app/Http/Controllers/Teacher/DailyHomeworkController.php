@@ -233,7 +233,7 @@ class DailyHomeworkController extends Controller
         $selectedDate = \Carbon\Carbon::parse($request->date);
         $includeDayAfterNext = $request->boolean('include_day_after_next', false);
         
-        // Ngày hôm sau và ngày hôm sau nữa
+        // Ngày hiện tại (được chọn), hôm sau và hôm sau nữa
         $nextDate = $selectedDate->copy()->addDay();
         $nextDateStr = $nextDate->format('Y-m-d');
         
@@ -246,6 +246,11 @@ class DailyHomeworkController extends Controller
         
         // Lấy lớp để lấy thời khóa biểu
         $class = ClassModel::findOrFail($classId);
+
+        // Build public share link (ưu tiên slug dễ đọc, fallback token)
+        $slug = $class->ensurePublicShareSlug();
+        $token = $class->ensurePublicShareToken();
+        $portalUrl = url('/p/' . ($slug ?: $token));
         
         // Tìm tất cả các bài tập có hạn nộp là ngày hôm sau (không quan trọng homework.date là gì)
         // Ví dụ: Thứ 4 giao bài, hạn nộp thứ 6 → thứ 5 lấy tin nhắn sẽ thấy bài tập có hạn thứ 6
@@ -291,6 +296,22 @@ class DailyHomeworkController extends Controller
             $dayAfterNextItems = $itemsWithDueDateDayAfterNext->merge($itemsToDoDayAfterNext)->unique('id');
         }
 
+        // Ghi chú chung của ngày được chọn
+        $homeworkSelected = Homework::where('class_id', $classId)
+            ->where('date', $selectedDate->format('Y-m-d'))
+            ->first();
+
+        // Lấy homework (ghi chú chung) cho ngày hôm sau và hôm sau nữa
+        $homeworkTomorrow = Homework::where('class_id', $classId)
+            ->where('date', $nextDateStr)
+            ->first();
+        $homeworkDayAfter = null;
+        if ($dayAfterNextDateStr) {
+            $homeworkDayAfter = Homework::where('class_id', $classId)
+                ->where('date', $dayAfterNextDateStr)
+                ->first();
+        }
+
         // Lấy thời khóa biểu để sắp xếp theo tiết
         $timetablesRaw = Timetable::where('class_id', $classId)
             ->with('subject')
@@ -312,8 +333,19 @@ class DailyHomeworkController extends Controller
             $timetables[$weekday][$subjectId]->push($timetable);
         }
 
-        // Format tin nhắn
-        $message = $this->formatZaloMessageForUpcoming($nextDayItems, $nextDate, $timetables, $dayAfterNextItems, $dayAfterNextDate);
+        // Format tin nhắn (kèm ghi chú chung nếu có)
+        $message = $this->formatZaloMessageForUpcoming(
+            $nextDayItems,
+            $nextDate,
+            $timetables,
+            $dayAfterNextItems,
+            $dayAfterNextDate,
+            $portalUrl,
+            $homeworkSelected?->notes,
+            $homeworkTomorrow?->notes,
+            $homeworkDayAfter?->notes,
+            $selectedDate
+        );
 
         return response()->json([
             'success' => true,
@@ -325,9 +357,21 @@ class DailyHomeworkController extends Controller
      * Format message for Zalo - bài tập cần làm hôm sau và hôm sau nữa (nếu có).
      * Nhận vào collection của HomeworkItem thay vì Homework objects.
      */
-    private function formatZaloMessageForUpcoming($nextDayItems, $nextDate, $timetables, $dayAfterNextItems = null, $dayAfterNextDate = null)
+    private function formatZaloMessageForUpcoming(
+        $nextDayItems,
+        $nextDate,
+        $timetables,
+        $dayAfterNextItems = null,
+        $dayAfterNextDate = null,
+        $portalUrl = null,
+        $notesSelected = null,
+        $notesTomorrow = null,
+        $notesDayAfter = null,
+        $selectedDate = null
+    )
     {
         $today = now();
+        $selectedDate = $selectedDate ?? $today;
         $nextDayNameVi = $this->getDayNameVi($nextDate->dayOfWeek);
         $nextFormattedDate = $nextDate->format('d/m/Y');
         
@@ -336,6 +380,12 @@ class DailyHomeworkController extends Controller
         
         $message = "📚 BÀI TẬP CẦN LÀM\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+
+        // Ghi chú chung của ngày được chọn (đặt lên đầu)
+        if (!empty($notesSelected)) {
+            $message .= "🗒️ Lời nhắc của GVCN / lớp trưởng:\n";
+            $message .= "{$notesSelected}\n\n";
+        }
         
         // Lọc các items có nội dung
         $nextDayItems = $nextDayItems->filter(function($item) {
@@ -409,11 +459,24 @@ class DailyHomeworkController extends Controller
             } else {
                 $message .= "📝 Chưa có bài tập\n\n";
             }
+            // Ghi chú chung (nếu có)
+            if ($dateLabel === $nextFormattedDate . ' (' . $nextDayNameVi . ')' && !empty($notesTomorrow)) {
+                $message .= "🗒️ Lời nhắc của GVCN / lớp trưởng:\n{$notesTomorrow}\n\n";
+            }
+            if ($dayAfterNextDate && $dateLabel === $dayAfterNextFormattedDate . ' (' . $dayAfterNextDayNameVi . ')' && !empty($notesDayAfter)) {
+                $message .= "🗒️ Lời nhắc của GVCN / lớp trưởng:\n{$notesDayAfter}\n\n";
+            }
         }
         
         // Nếu không có bài tập nào
         if ($sortedItems->count() == 0) {
             $message .= "📝 Chưa có bài tập cần làm trong 2 ngày tới.\n\n";
+        }
+
+        // Append public portal link so parents/students can follow on the website
+        if (!empty($portalUrl)) {
+            $message .= "\n🔗 Xem thời khoá biểu & bài tập trên web:\n";
+            $message .= "{$portalUrl}\n";
         }
         
         return trim($message);
@@ -457,7 +520,7 @@ class DailyHomeworkController extends Controller
      */
     private function getDayNameVi($dayOfWeek)
     {
-        $days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+        $days = ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
         return $days[$dayOfWeek] ?? '';
     }
 
@@ -631,8 +694,12 @@ class DailyHomeworkController extends Controller
             }
         }
 
-        return redirect()->route('teacher.daily-homework.index')
-            ->with('success', 'Bài tập đã được tạo thành công.');
+        // Redirect back to the calendar/list context so the user immediately sees the result + toast
+        return redirect()->route('teacher.daily-homework.list', [
+                'class_id' => $classId,
+                'date' => $validated['date'],
+            ])
+            ->with('success', 'Giao bài tập thành công.');
     }
 
     /**
@@ -648,6 +715,17 @@ class DailyHomeworkController extends Controller
         }
         
         $class = $homework->classModel;
+
+        // Không cho phép sửa bài tập ở quá khứ
+        $today = now()->startOfDay();
+        $homeworkDate = \Carbon\Carbon::parse($homework->date)->startOfDay();
+        if ($homeworkDate->lt($today)) {
+            return redirect()->route('teacher.daily-homework.list', [
+                    'class_id' => $homework->class_id,
+                    'date' => $homeworkDate->format('Y-m-d'),
+                ])
+                ->with('error', 'Không thể sửa bài tập của những ngày đã qua.');
+        }
         
         // Kiểm tra quyền truy cập lớp
         if (!$user->hasAccessToClass($class->id)) {
@@ -687,12 +765,25 @@ class DailyHomeworkController extends Controller
         if (!$user->hasAccessToClass($homework->class_id)) {
             abort(403, 'Bạn không có quyền truy cập lớp này.');
         }
+
+        // Không cho phép sửa bài tập ở quá khứ
+        $today = now()->startOfDay();
+        $homeworkDate = \Carbon\Carbon::parse($homework->date)->startOfDay();
+        if ($homeworkDate->lt($today)) {
+            return redirect()->route('teacher.daily-homework.list', [
+                    'class_id' => $homework->class_id,
+                    'date' => $homeworkDate->format('Y-m-d'),
+                ])
+                ->with('error', 'Không thể sửa bài tập của những ngày đã qua.');
+        }
         
+        // Note: the form submits one "homework[item]" per timetable slot, even if content is empty.
+        // So `content` must be nullable; we'll only persist items that actually have content.
         $validated = $request->validate([
             'notes' => 'nullable|string',
             'homework' => 'nullable|array',
             'homework.*.subject_id' => 'required_with:homework|exists:subjects,id',
-            'homework.*.content' => 'required_with:homework|string',
+            'homework.*.content' => 'nullable|string',
             'homework.*.due_date' => 'nullable|date',
         ]);
 
@@ -728,8 +819,12 @@ class DailyHomeworkController extends Controller
             }
         }
 
-        return redirect()->route('teacher.daily-homework.index')
-            ->with('success', 'Bài tập đã được cập nhật thành công.');
+        // Redirect back to the calendar/list context so the user immediately sees the updated result + toast
+        return redirect()->route('teacher.daily-homework.list', [
+                'class_id' => $homework->class_id,
+                'date' => $homework->date->format('Y-m-d'),
+            ])
+            ->with('success', 'Sửa bài tập thành công.');
     }
 
     /**
@@ -764,6 +859,10 @@ class DailyHomeworkController extends Controller
                 ->with('error', 'Chỉ có thể xóa bài tập của ngày hôm nay.');
         }
         
+        // Keep context for redirect after deletion
+        $classId = $homework->class_id;
+        $date = \Carbon\Carbon::parse($homework->date)->format('Y-m-d');
+
         // Xóa bài tập
         $homework->delete();
         
@@ -774,8 +873,12 @@ class DailyHomeworkController extends Controller
             ]);
         }
         
-        return redirect()->route('teacher.daily-homework.index')
-            ->with('success', 'Bài tập đã được xóa thành công.');
+        // Redirect back to the calendar/list context so the user stays on the same screen + toast
+        return redirect()->route('teacher.daily-homework.list', [
+                'class_id' => $classId,
+                'date' => $date,
+            ])
+            ->with('success', 'Xóa bài tập thành công.');
     }
 }
 

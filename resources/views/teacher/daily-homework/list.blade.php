@@ -231,7 +231,7 @@
 
         // Cập nhật hiển thị ngày
         const dateObj = new Date(date);
-        const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+        const dayNames = ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
         const dayNameVi = dayNames[dateObj.getDay()];
         const formattedDate = dateObj.toLocaleDateString('vi-VN');
 
@@ -294,15 +294,18 @@
                             `;
                         });
                         html += '</div>';
-                        // Kiểm tra xem có phải ngày hôm nay không
+                        // Kiểm tra xem có phải ngày hôm nay / quá khứ không
                         const today = new Date().toISOString().split('T')[0];
                         const isToday = date === today;
+                        const isPast = date < today;
                         
                         let actionButtons = `
                             <div class="mt-4 pt-3 border-top d-flex gap-2 flex-wrap">
-                                <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary">
-                                    <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
-                                </a>
+                                ${!isPast ? `
+                                    <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary">
+                                        <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
+                                    </a>
+                                ` : ``}
                                 <button type="button" class="btn btn-success" onclick="showZaloModal('${date}')">
                                     <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
                                 </button>

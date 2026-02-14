@@ -28,20 +28,49 @@ class UserController extends Controller
     /**
      * Display a listing of users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['roles', 'classes'])->latest()->paginate(15);
-        return view('admin.users.index', compact('users'));
+        $classId = $request->get('class_id');
+        $classes = ClassModel::withCount('users')->orderBy('name')->get();
+
+        if ($classId) {
+            $query = User::with(['roles', 'classes']);
+            $selectedClass = null;
+
+            if ($classId === 'none') {
+                $query->whereDoesntHave('classes');
+                $selectedClass = (object)['name' => 'Chưa gán lớp'];
+            } elseif ($classId === 'all') {
+                // Không filter theo lớp
+                $selectedClass = (object)['name' => 'Tất cả người dùng'];
+            } else {
+                $query->whereHas('classes', function($q) use ($classId) {
+                    $q->where('classes.id', $classId);
+                });
+                $selectedClass = ClassModel::find($classId);
+            }
+
+            $users = $query->latest()->paginate(20);
+            return view('admin.users.index', compact('users', 'classes', 'selectedClass', 'classId'));
+        }
+
+        return view('admin.users.index', compact('classes', 'classId'));
     }
 
     /**
      * Show the form for creating a new user.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $roles = Role::orderBy('name')->get();
         $classes = ClassModel::orderBy('name')->get();
-        return view('admin.users.create', compact('roles', 'classes'));
+        $preselectedClassId = $request->get('class_id');
+        
+        // Chuyển đổi 'all' hoặc 'none' thành null
+        if (in_array($preselectedClassId, ['all', 'none'])) {
+            $preselectedClassId = null;
+        }
+        
+        return view('admin.users.create', compact('classes', 'preselectedClassId'));
     }
 
     /**
@@ -53,9 +82,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,teacher,class_monitor',
-            'roles' => 'nullable|array',
-            'roles.*' => 'exists:roles,id',
+            'role' => 'required|in:admin,teacher,class_monitor,academic_sub_monitor',
             'classes' => 'nullable|array',
             'classes.*' => 'exists:classes,id',
         ]);
@@ -67,18 +94,18 @@ class UserController extends Controller
             'role' => $validated['role'],
         ]);
 
-        // Gán roles
-        if (isset($validated['roles']) && !empty($validated['roles'])) {
-            // Chuyển đổi IDs thành Role models
-            $roles = Role::whereIn('id', $validated['roles'])->get();
-            $user->syncRoles($roles);
-        } else {
-            // Nếu không chọn roles, gán role mặc định từ field 'role'
-            $user->assignRole($validated['role']);
-        }
+        // Gán role mặc định vào hệ thống Spatie
+        $user->assignRole($validated['role']);
 
-        // Gán classes
-        if (isset($validated['classes'])) {
+        // Gán classes dựa trên vai trò
+        if ($validated['role'] === 'admin') {
+            $user->classes()->detach();
+        } elseif (in_array($validated['role'], ['class_monitor', 'academic_sub_monitor'])) {
+            // Chỉ lấy lớp đầu tiên nếu là ban cán sự
+            if (isset($validated['classes']) && !empty($validated['classes'])) {
+                $user->classes()->sync([$validated['classes'][0]]);
+            }
+        } elseif (isset($validated['classes'])) {
             $user->classes()->sync($validated['classes']);
         }
 
@@ -91,10 +118,9 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = Role::orderBy('name')->get();
         $classes = ClassModel::orderBy('name')->get();
         $user->load(['roles', 'classes']);
-        return view('admin.users.edit', compact('user', 'roles', 'classes'));
+        return view('admin.users.edit', compact('user', 'classes'));
     }
 
     /**
@@ -106,9 +132,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,teacher,class_monitor',
-            'roles' => 'nullable|array',
-            'roles.*' => 'exists:roles,id',
+            'role' => 'required|in:admin,teacher,class_monitor,academic_sub_monitor',
             'classes' => 'nullable|array',
             'classes.*' => 'exists:classes,id',
         ]);
@@ -123,19 +147,20 @@ class UserController extends Controller
             $user->update(['password' => Hash::make($validated['password'])]);
         }
 
-        // Gán roles
-        if (isset($validated['roles']) && !empty($validated['roles'])) {
-            // Chuyển đổi IDs thành Role models
-            $roles = Role::whereIn('id', $validated['roles'])->get();
-            $user->syncRoles($roles);
-        } else {
-            // Nếu không chọn roles, chỉ gán role mặc định từ field 'role'
-            $user->syncRoles([]);
-            $user->assignRole($validated['role']);
-        }
+        // Đồng bộ role vào hệ thống Spatie
+        $user->syncRoles([$validated['role']]);
 
-        // Gán classes
-        if (isset($validated['classes'])) {
+        // Gán classes dựa trên vai trò
+        if ($validated['role'] === 'admin') {
+            $user->classes()->detach();
+        } elseif (in_array($validated['role'], ['class_monitor', 'academic_sub_monitor'])) {
+            // Chỉ lấy lớp đầu tiên nếu là ban cán sự
+            if (isset($validated['classes']) && !empty($validated['classes'])) {
+                $user->classes()->sync([$validated['classes'][0]]);
+            } else {
+                $user->classes()->detach();
+            }
+        } elseif (isset($validated['classes'])) {
             $user->classes()->sync($validated['classes']);
         } else {
             $user->classes()->detach();

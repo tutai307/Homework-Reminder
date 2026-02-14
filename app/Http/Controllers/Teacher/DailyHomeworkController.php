@@ -23,23 +23,23 @@ class DailyHomeworkController extends Controller
             abort(403, 'Bạn không có quyền truy cập tính năng này.');
         }
         
-        // Nếu là giáo viên hoặc lớp trưởng, tự động redirect đến lớp được gán
-        if (!$user->isAdmin()) {
-            $class = $user->getAssignedClass();
-            if ($class) {
-                // Redirect đến trang list với lớp được gán và ngày hôm nay
-                return redirect()->route('teacher.daily-homework.list', [
-                    'class_id' => $class->id,
-                    'date' => date('Y-m-d')
-                ]);
-            } else {
+        // Nếu là Admin, lấy tất cả lớp. Nếu là Giáo viên/Lớp trưởng/Lớp phó, lấy các lớp được gán.
+        if ($user->isAdmin()) {
+            $classes = ClassModel::orderBy('name')->get();
+        } else {
+            $classes = $user->classes()->orderBy('name')->get();
+            
+            if ($classes->isEmpty()) {
                 return redirect()->back()
                     ->with('error', 'Bạn chưa được gán lớp nào. Vui lòng liên hệ admin.');
             }
+
+            // Tự động chuyển hướng nếu chỉ có 1 lớp (dành cho Lớp phó học tập/Lớp trưởng)
+            if ($classes->count() === 1 && ($user->isClassMonitor() || $user->isAcademicSubMonitor())) {
+                return redirect()->route('teacher.daily-homework.list', ['class_id' => $classes->first()->id]);
+            }
         }
         
-        // Admin xem tất cả lớp
-        $classes = ClassModel::orderBy('name')->get();
         return view('teacher.daily-homework.index', compact('classes'));
     }
 
@@ -55,19 +55,21 @@ class DailyHomeworkController extends Controller
             abort(403, 'Bạn không có quyền xem bài tập.');
         }
 
-        // Nếu là giáo viên hoặc lớp trưởng, tự động lấy lớp được gán
-        if (!$user->isAdmin()) {
+        // Xác định lớp cần xem
+        if ($request->has('class_id')) {
+            $classId = $request->class_id;
+            $class = ClassModel::findOrFail($classId);
+        } elseif (!$user->isAdmin()) {
             $class = $user->getAssignedClass();
             if (!$class) {
                 return redirect()->back()
                     ->with('error', 'Bạn chưa được gán lớp nào. Vui lòng liên hệ admin.');
             }
+            $classId = $class->id;
         } else {
-            // Admin cần chọn lớp
-            $request->validate([
-                'class_id' => 'required|exists:classes,id',
-            ]);
-            $class = ClassModel::findOrFail($request->class_id);
+            // Admin bắt buộc phải chọn lớp
+            return redirect()->route('teacher.daily-homework.index')
+                ->with('error', 'Vui lòng chọn một lớp để xem bài tập.');
         }
         
         // Kiểm tra quyền truy cập lớp
@@ -126,30 +128,22 @@ class DailyHomeworkController extends Controller
             ], 403);
         }
         
-        // Nếu là giáo viên hoặc lớp trưởng, tự động lấy lớp được gán
-        if (!$user->isAdmin()) {
+        // Xác định classId
+        if ($request->has('class_id')) {
+            $classId = $request->class_id;
+        } elseif (!$user->isAdmin()) {
             $class = $user->getAssignedClass();
             if (!$class) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn chưa được gán lớp nào.',
-                ], 403);
+                return response()->json(['success' => false, 'message' => 'Bạn chưa được gán lớp nào.'], 403);
             }
             $classId = $class->id;
         } else {
-            // Admin cần gửi class_id
-            $request->validate([
-                'class_id' => 'required|exists:classes,id',
-            ]);
-            $classId = $request->class_id;
-            
-            // Kiểm tra quyền truy cập lớp
-            if (!$user->hasAccessToClass($classId)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn không có quyền truy cập lớp này.',
-                ], 403);
-            }
+            return response()->json(['success' => false, 'message' => 'Vui lòng cung cấp ID lớp học.'], 400);
+        }
+        
+        // Kiểm tra quyền truy cập lớp
+        if (!$user->hasAccessToClass($classId)) {
+            return response()->json(['success' => false, 'message' => 'Bạn không có quyền truy cập lớp này.'], 403);
         }
         
         $request->validate([
@@ -199,30 +193,22 @@ class DailyHomeworkController extends Controller
             ], 403);
         }
         
-        // Nếu là giáo viên hoặc lớp trưởng, tự động lấy lớp được gán
-        if (!$user->isAdmin()) {
+        // Xác định classId
+        if ($request->has('class_id')) {
+            $classId = $request->class_id;
+        } elseif (!$user->isAdmin()) {
             $class = $user->getAssignedClass();
             if (!$class) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn chưa được gán lớp nào.',
-                ], 403);
+                return response()->json(['success' => false, 'message' => 'Bạn chưa được gán lớp nào.'], 403);
             }
             $classId = $class->id;
         } else {
-            // Admin cần gửi class_id
-            $request->validate([
-                'class_id' => 'required|exists:classes,id',
-            ]);
-            $classId = $request->class_id;
-            
-            // Kiểm tra quyền truy cập lớp
-            if (!$user->hasAccessToClass($classId)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn không có quyền truy cập lớp này.',
-                ], 403);
-            }
+            return response()->json(['success' => false, 'message' => 'Vui lòng cung cấp ID lớp học.'], 400);
+        }
+        
+        // Kiểm tra quyền truy cập lớp
+        if (!$user->hasAccessToClass($classId)) {
+            return response()->json(['success' => false, 'message' => 'Bạn không có quyền truy cập lớp này.'], 403);
         }
         
         $request->validate([
@@ -252,65 +238,46 @@ class DailyHomeworkController extends Controller
         $token = $class->ensurePublicShareToken();
         $portalUrl = url('/p/' . ($slug ?: $token));
         
-        // Tìm tất cả các bài tập có hạn nộp là ngày hôm sau (không quan trọng homework.date là gì)
-        // Ví dụ: Thứ 4 giao bài, hạn nộp thứ 6 → thứ 5 lấy tin nhắn sẽ thấy bài tập có hạn thứ 6
-        $nextDayItems = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId) {
+        // Lấy bài tập cho các ngày liên quan (ngày tiếp theo và ngày sau nữa nếu có)
+        $datesToFetch = [$nextDateStr];
+        if ($includeDayAfterNext && $dayAfterNextDateStr) {
+            $datesToFetch[] = $dayAfterNextDateStr;
+        }
+
+        // Lấy tất cả bài tập liên quan trong một lần query để giảm round-trip DB
+        $relatedItems = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId, $datesToFetch) {
                 $query->where('class_id', $classId);
             })
-            ->where('due_date', $nextDateStr)
-            ->with(['subject', 'homework'])
-            ->get();
-        
-        // Lấy các bài tập cần làm trong ngày hôm sau (homework.date = ngày hôm sau)
-        // Gộp với các bài tập có hạn nộp là ngày hôm sau
-        $itemsToDoNextDay = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId, $nextDateStr) {
-                $query->where('class_id', $classId)
-                      ->where('date', $nextDateStr);
+            ->where(function($query) use ($datesToFetch) {
+                $query->whereIn('due_date', $datesToFetch)
+                      ->orWhereHas('homework', function($q) use ($datesToFetch) {
+                          $q->whereIn('date', $datesToFetch);
+                      });
             })
             ->with(['subject', 'homework'])
             ->get();
-        
-        // Gộp tất cả: bài tập có hạn nộp là ngày hôm sau + bài tập cần làm trong ngày hôm sau
-        $nextDayItems = $nextDayItems->merge($itemsToDoNextDay)->unique('id');
-        
-        // Nếu có checkbox, cũng lấy bài tập có hạn nộp là ngày hôm sau nữa
+
+        // Phân loại lại theo ngày
+        $nextDayItems = $relatedItems->filter(function($item) use ($nextDateStr) {
+            return $item->due_date?->format('Y-m-d') === $nextDateStr || $item->homework->date === $nextDateStr;
+        })->unique('id');
+
         $dayAfterNextItems = collect();
         if ($includeDayAfterNext && $dayAfterNextDateStr) {
-            // Tìm tất cả bài tập có hạn nộp là ngày hôm sau nữa
-            $itemsWithDueDateDayAfterNext = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId) {
-                    $query->where('class_id', $classId);
-                })
-                ->where('due_date', $dayAfterNextDateStr)
-                ->with(['subject', 'homework'])
-                ->get();
-            
-            // Lấy các bài tập cần làm trong ngày hôm sau nữa (homework.date = ngày hôm sau nữa)
-            $itemsToDoDayAfterNext = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId, $dayAfterNextDateStr) {
-                    $query->where('class_id', $classId)
-                          ->where('date', $dayAfterNextDateStr);
-                })
-                ->with(['subject', 'homework'])
-                ->get();
-            
-            // Gộp tất cả: bài tập có hạn nộp là ngày hôm sau nữa + bài tập cần làm trong ngày hôm sau nữa
-            $dayAfterNextItems = $itemsWithDueDateDayAfterNext->merge($itemsToDoDayAfterNext)->unique('id');
+            $dayAfterNextItems = $relatedItems->filter(function($item) use ($dayAfterNextDateStr) {
+                return $item->due_date?->format('Y-m-d') === $dayAfterNextDateStr || $item->homework->date === $dayAfterNextDateStr;
+            })->unique('id');
         }
 
-        // Ghi chú chung của ngày được chọn
-        $homeworkSelected = Homework::where('class_id', $classId)
-            ->where('date', $selectedDate->format('Y-m-d'))
-            ->first();
+        // Ghi chú chung của các ngày
+        $homeworkNotes = Homework::where('class_id', $classId)
+            ->whereIn('date', array_merge([$selectedDate->format('Y-m-d')], $datesToFetch))
+            ->get()
+            ->keyBy('date');
 
-        // Lấy homework (ghi chú chung) cho ngày hôm sau và hôm sau nữa
-        $homeworkTomorrow = Homework::where('class_id', $classId)
-            ->where('date', $nextDateStr)
-            ->first();
-        $homeworkDayAfter = null;
-        if ($dayAfterNextDateStr) {
-            $homeworkDayAfter = Homework::where('class_id', $classId)
-                ->where('date', $dayAfterNextDateStr)
-                ->first();
-        }
+        $homeworkSelected = $homeworkNotes->get($selectedDate->format('Y-m-d'));
+        $homeworkTomorrow = $homeworkNotes->get($nextDateStr);
+        $homeworkDayAfter = $dayAfterNextDateStr ? $homeworkNotes->get($dayAfterNextDateStr) : null;
 
         // Lấy thời khóa biểu để sắp xếp theo tiết
         $timetablesRaw = Timetable::where('class_id', $classId)
@@ -567,8 +534,12 @@ class DailyHomeworkController extends Controller
             abort(403, 'Bạn không có quyền tạo bài tập.');
         }
         
-        // Nếu là giáo viên hoặc lớp trưởng, tự động lấy lớp được gán
-        if (!$user->isAdmin()) {
+        // Ưu tiên class_id từ request (dành cho cả Giáo viên và Admin)
+        if ($request->has('class_id')) {
+            $class = ClassModel::findOrFail($request->class_id);
+            $date = $request->date ?? date('Y-m-d');
+        } elseif (!$user->isAdmin()) {
+            // Fallback cho giáo viên nếu không có class_id trong request
             $class = $user->getAssignedClass();
             if (!$class) {
                 return redirect()->back()
@@ -576,7 +547,7 @@ class DailyHomeworkController extends Controller
             }
             $date = $request->date ?? date('Y-m-d');
         } else {
-            // Admin cần chọn lớp và ngày
+            // Admin bắt buộc phải có class_id
             $request->validate([
                 'class_id' => 'required|exists:classes,id',
                 'date' => 'required|date',
@@ -600,6 +571,12 @@ class DailyHomeworkController extends Controller
             ->orderBy('period')
             ->get();
 
+        // Kiểm tra nếu không có tiết học nào trong ngày này
+        if ($timetables->isEmpty()) {
+            return redirect()->route('teacher.daily-homework.list', ['class_id' => $class->id, 'date' => $date])
+                ->with('error', 'Ngày này không có tiết học trong thời khóa biểu, không thể giao bài tập.');
+        }
+
         // Kiểm tra xem đã có bài tập cho ngày này chưa
         $existingHomework = Homework::where('class_id', $class->id)
             ->where('date', $date)
@@ -621,8 +598,11 @@ class DailyHomeworkController extends Controller
             abort(403, 'Bạn không có quyền tạo bài tập.');
         }
         
-        // Nếu là giáo viên hoặc lớp trưởng, tự động lấy lớp được gán
-        if (!$user->isAdmin()) {
+        // Ưu tiên class_id từ request
+        if ($request->has('class_id')) {
+            $classId = $request->class_id;
+        } elseif (!$user->isAdmin()) {
+            // Fallback cho giáo viên
             $class = $user->getAssignedClass();
             if (!$class) {
                 return redirect()->back()
@@ -630,7 +610,7 @@ class DailyHomeworkController extends Controller
             }
             $classId = $class->id;
         } else {
-            // Admin cần gửi class_id
+            // Admin bắt buộc phải có class_id
             $request->validate([
                 'class_id' => 'required|exists:classes,id',
             ]);
@@ -881,4 +861,3 @@ class DailyHomeworkController extends Controller
             ->with('success', 'Xóa bài tập thành công.');
     }
 }
-

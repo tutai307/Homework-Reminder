@@ -35,6 +35,7 @@ class UserSeeder extends Seeder
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $teacherRole = Role::firstOrCreate(['name' => 'teacher', 'guard_name' => 'web']);
         $classMonitorRole = Role::firstOrCreate(['name' => 'class_monitor', 'guard_name' => 'web']);
+        $academicSubMonitorRole = Role::firstOrCreate(['name' => 'academic_sub_monitor', 'guard_name' => 'web']);
 
         // Gán quyền cho admin (full quyền)
         $adminRole->syncPermissions($permissions);
@@ -48,6 +49,12 @@ class UserSeeder extends Seeder
 
         // Gán quyền cho lớp trưởng (chỉ tạo bài tập)
         $classMonitorRole->syncPermissions([
+            'create-homework',
+            'view-homework',
+        ]);
+
+        // Gán quyền cho lớp phó học tập (chương trình học tập tương tự lớp trưởng)
+        $academicSubMonitorRole->syncPermissions([
             'create-homework',
             'view-homework',
         ]);

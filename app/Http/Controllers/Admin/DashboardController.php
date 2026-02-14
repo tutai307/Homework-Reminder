@@ -53,29 +53,6 @@ class DashboardController extends Controller
             ->where('homework.date', $today)
             ->count();
 
-        // 2. Bảng tình trạng bài tập của lớp
-        $classes = ClassModel::orderBy('name')->get();
-        
-        // Lấy tất cả homework hôm nay với items
-        $homeworksToday = Homework::where('date', $today)
-            ->with('items')
-            ->get()
-            ->keyBy('class_id');
-
-        $classesStatus = $classes->map(function($class) use ($homeworksToday) {
-            $homework = $homeworksToday->get($class->id);
-            $hasHomework = $homework ? true : false;
-            $subjectCount = $hasHomework ? $homework->items->count() : 0;
-            
-            return [
-                'id' => $class->id,
-                'name' => $class->name,
-                'school_year' => $class->school_year,
-                'has_homework' => $hasHomework,
-                'subject_count' => $subjectCount,
-            ];
-        });
-
         // 3. Bài tập theo thời khóa biểu
         // Tổng số môn học dự kiến của tất cả các lớp hôm nay
         // Tính số môn học duy nhất cho mỗi lớp, sau đó tổng hợp
@@ -113,6 +90,81 @@ class DashboardController extends Controller
             ? round(($totalSubjectsWithHomework / $totalExpectedSubjects) * 100, 2) 
             : 0;
 
+        // 2. Bảng tình trạng bài tập của lớp
+        $classes = ClassModel::orderBy('name')->get();
+        
+        // Lấy tất cả homework hôm nay với items
+        $homeworksToday = Homework::where('date', $today)
+            ->with('items')
+            ->get()
+            ->keyBy('class_id');
+
+        $classesStatus = $classes->map(function($class) use ($homeworksToday, $expectedSubjectsByClass, $subjectsWithHomeworkByClass) {
+            $homework = $homeworksToday->get($class->id);
+            $hasHomework = $homework ? true : false;
+            
+            $expected = $expectedSubjectsByClass->get($class->id, 0);
+            $actual = $subjectsWithHomeworkByClass->get($class->id, 0);
+            
+            $rate = $expected > 0 ? round(($actual / $expected) * 100, 0) : 0;
+            
+            return [
+                'id' => $class->id,
+                'name' => $class->name,
+                'school_year' => $class->school_year,
+                'has_homework' => $hasHomework,
+                'subject_count' => $actual,
+                'expected_count' => $expected,
+                'coverage_rate' => $rate
+            ];
+        });
+
+        // 4. Dữ liệu cho biểu đồ (Charts)
+        
+        // Biểu đồ 1: Tỷ lệ bao phủ 7 ngày gần nhất
+        $last7Days = collect();
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $dayName = now()->subDays($i)->format('d/m');
+            
+            // Expected subjects for this day of week
+            $wDay = now()->subDays($i)->dayOfWeek;
+            $dbWDay = $wDay == 0 ? 7 : $wDay;
+            
+            $expectedCount = DB::table('timetables')
+                ->where('weekday', $dbWDay)
+                ->distinct('class_id', 'subject_id')
+                ->count();
+            
+            $actualCount = DB::table('homework_items')
+                ->join('homework', 'homework_items.homework_id', '=', 'homework.id')
+                ->where('homework.date', $date)
+                ->whereNotNull('homework_items.content')
+                ->where('homework_items.content', '!=', '')
+                ->distinct('homework_items.subject_id', 'homework.class_id')
+                ->count();
+                
+            $rate = $expectedCount > 0 ? round(($actualCount / $expectedCount) * 100, 1) : 0;
+            
+            $last7Days->push([
+                'label' => $dayName,
+                'rate' => $rate,
+                'actual' => $actualCount,
+                'expected' => $expectedCount
+            ]);
+        }
+        
+        // Biểu đồ 2: Phân bố bài tập theo môn học hôm nay
+        $subjectDistribution = DB::table('homework_items')
+            ->join('homework', 'homework_items.homework_id', '=', 'homework.id')
+            ->join('subjects', 'homework_items.subject_id', '=', 'subjects.id')
+            ->where('homework.date', $today)
+            ->whereNotNull('homework_items.content')
+            ->where('homework_items.content', '!=', '')
+            ->select('subjects.name', DB::raw('count(*) as total'))
+            ->groupBy('subjects.name')
+            ->get();
+
         return view('admin.dashboard.index', compact(
             'totalClasses',
             'classesWithHomeworkCount',
@@ -122,7 +174,9 @@ class DashboardController extends Controller
             'totalExpectedSubjects',
             'totalSubjectsWithHomework',
             'coverageRate',
-            'today'
+            'today',
+            'last7Days',
+            'subjectDistribution'
         ));
     }
 }

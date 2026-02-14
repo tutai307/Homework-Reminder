@@ -78,11 +78,12 @@
                                                 <label for="homework_{{ $period }}_{{ $subject->id }}_due_date" class="form-label small">
                                                     Hạn nộp (tùy chọn)
                                                 </label>
-                                                <input type="date" 
+                                                <input type="text" 
                                                        name="homework[{{ $index }}][due_date]" 
                                                        id="homework_{{ $period }}_{{ $subject->id }}_due_date" 
-                                                       class="form-control @error('homework.'.$index.'.due_date') is-invalid @enderror" 
-                                                       value="{{ old('homework.'.$index.'.due_date', $existingItem ? ($existingItem->due_date ? $existingItem->due_date->format('Y-m-d') : '') : '') }}">
+                                                       class="form-control datepicker @error('homework.'.$index.'.due_date') is-invalid @enderror" 
+                                                       value="{{ old('homework.'.$index.'.due_date', $existingItem ? ($existingItem->due_date ? $existingItem->due_date->format('Y-m-d') : '') : '') }}"
+                                                       placeholder="Chọn ngày hạn nộp">
                                                 @error('homework.'.$index.'.due_date')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror

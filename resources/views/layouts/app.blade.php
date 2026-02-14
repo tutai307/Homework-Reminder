@@ -11,7 +11,7 @@
     <link rel="alternate icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#0d6efd">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -20,169 +20,123 @@
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
     <style>
-        :root {
-            --primary-color: #0d6efd;
-            --secondary-color: #6c757d;
-            --success-color: #198754;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #0dcaf0;
-        }
-        
         body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
         
         .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .navbar-brand {
-            font-weight: 600;
-            font-size: 1.5rem;
-        }
-        
+        /* Custom shadows and borders for cards to give a premium feel using Utilities */
         .card {
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(.25,.8,.25,1);
         }
         
         .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,.12);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.08) !important;
+        }
+
+        /* Soft background colors for badges using Bootstrap variables if possible, or simple CSS if not available in standard utility */
+        .badge-soft-primary {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
         }
         
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px 12px 0 0 !important;
-            padding: 1rem 1.5rem;
-            font-weight: 600;
+        .badge-soft-success {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: #198754;
         }
-        
-        .btn {
-            border-radius: 8px;
-            font-weight: 500;
-            padding: 0.5rem 1.25rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
-        }
-        
-        .table {
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .table tbody tr {
-            transition: background-color 0.2s;
-        }
-        
-        .table tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            padding: 0.6rem 1rem;
-            transition: all 0.3s;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
-        .badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        
+
         .page-header {
             background: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             margin-bottom: 2rem;
         }
-        
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 0;
+
+        /* Icon Circle Utilities */
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        
-        .dropdown-menu {
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,.15);
-            border: none;
+
+        .icon-circle-sm {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        
-        .dropdown-item {
-            transition: all 0.2s;
+
+        .icon-circle-lg {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        
-        .dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: #667eea;
+
+        /* Preloader Styles */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
         }
-        
-        /* Pagination styles */
-        .pagination {
-            margin-bottom: 0;
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #0d6efd;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
         }
-        
-        .pagination .page-link {
-            color: #667eea;
-            border-color: #dee2e6;
-            transition: all 0.2s;
-        }
-        
-        .pagination .page-link:hover {
-            background-color: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .pagination .page-item.active .page-link {
-            background-color: #667eea;
-            border-color: #667eea;
-        }
-        
-        .pagination .page-item.disabled .page-link {
-            color: #6c757d;
-            background-color: #fff;
-            border-color: #dee2e6;
-            cursor: not-allowed;
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
     
     @stack('styles')
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+<body class="d-flex flex-column min-vh-100">
+    <!-- Preloader -->
+    <div id="preloader" style="display: none;">
+        <div class="loader"></div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ Auth::check() ? (Auth::user()->isAdmin() ? route('admin.dashboard') : route('teacher.daily-homework.index')) : route('login') }}">
                 <i class="bi bi-journal-bookmark-fill me-2"></i>Homework Reminder
@@ -250,7 +204,7 @@
                         @if(Auth::user()->isTeacher() && Auth::user()->classes()->count() > 0)
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('teacher.class-monitor.index') }}">
-                                    <i class="bi bi-person-badge me-1"></i>Lớp trưởng
+                                    <i class="bi bi-person-badge me-1"></i>Ban cán sự
                                 </a>
                             </li>
                         @endif
@@ -261,7 +215,7 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle me-1"></i>{{ Auth::user()->name }}
-                                <span class="badge bg-light text-dark ms-2">{{ Auth::user()->role }}</span>
+                                <!-- <span class="badge bg-light text-dark ms-2">{{ Auth::user()->role }}</span> -->
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
@@ -290,64 +244,146 @@
         @yield('content')
     </div>
 
+    <!-- jQuery (Required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/vi.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-        // Hiển thị thông báo từ session
-        @if(session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Thành công!',
-                text: '{{ session('success') }}',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        @endif
+        // Preloader control
+        const showLoader = () => $('#preloader').fadeIn('fast');
+        const hideLoader = () => $('#preloader').fadeOut('fast');
 
-        @if(session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi!',
-                text: '{{ session('error') }}',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 4000,
-                timerProgressBar: true
-            });
-        @endif
-
-        // Xác nhận xóa với SweetAlert2 cho các form có class delete-form
-        document.addEventListener('DOMContentLoaded', function() {
-            const deleteForms = document.querySelectorAll('.delete-form');
-            deleteForms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const formElement = this;
-                    
-                    Swal.fire({
-                        title: 'Bạn có chắc chắn?',
-                        text: "Hành động này không thể hoàn tác!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: '<i class="bi bi-trash me-1"></i>Có, xóa!',
-                        cancelButtonText: 'Hủy',
-                        reverseButtons: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            formElement.submit();
-                        }
+        $(document).ready(function() {
+            // Khởi tạo Select2
+            const initSelect2 = () => {
+                $('.select2:not(.select2-hidden-accessible)').each(function() {
+                    $(this).select2({
+                        theme: 'bootstrap-5',
+                        language: 'vi',
+                        width: '100%',
+                        placeholder: $(this).data('placeholder') || 'Chọn một tùy chọn',
+                        allowClear: true
                     });
                 });
+            };
+            
+            initSelect2();
+
+            // Khởi tạo Flatpickr
+            $('.datepicker').flatpickr({
+                locale: 'vn',
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                allowInput: true
             });
+
+            // Bootstrap Validation & Preloader
+            $('.needs-validation').on('submit', function(event) {
+                const form = this;
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    hideLoader();
+                } else {
+                    showLoader();
+                }
+                $(form).addClass('was-validated');
+            });
+
+            // Tự động gán thông báo lỗi cho validation
+            $('.needs-validation input, .needs-validation select, .needs-validation textarea').on('invalid', function(e) {
+                e.preventDefault();
+                
+                let feedback = $(this).closest('.mb-3, .mb-4, td').find('.invalid-feedback');
+                if (feedback.length === 0) {
+                    feedback = $('<div class="invalid-feedback"></div>');
+                    $(this).after(feedback);
+                }
+                
+                const label = $(this).closest('div').find('label').text().replace('*', '').trim() || 'Trường này';
+                let message = this.validationMessage;
+
+                if (this.validity.valueMissing) {
+                    message = `Vui lòng nhập ${label.toLowerCase()}.`;
+                }
+                
+                feedback.text(message).show();
+            }).on('input change', function() {
+                if (this.checkValidity()) {
+                    $(this).closest('.mb-3, .mb-4, td').find('.invalid-feedback').text('').hide();
+                }
+            });
+
+            // Global ajax loading
+            $(document).ajaxStart(showLoader).ajaxStop(hideLoader);
+
+            // Hiển thị thông báo từ session
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: {!! json_encode(session('success')) !!},
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            @endif
+
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: {!! json_encode(session('error')) !!},
+                    confirmButtonColor: '#0d6efd'
+                });
+            @endif
+
+            @if($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi nhập liệu!',
+                    html: '<ul class="text-start">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
+                    confirmButtonColor: '#0d6efd'
+                });
+            @endif
+
+            // Xác nhận xóa
+            $('.delete-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = this;
+                
+                Swal.fire({
+                    title: 'Bạn có chắc chắn?',
+                    text: "Hành động này không thể hoàn tác!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="bi bi-trash me-1"></i>Có, xóa!',
+                    cancelButtonText: 'Hủy',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        showLoader();
+                        form.submit();
+                    }
+                });
+            });
+            
+            // Đảm bảo preloader ẩn khi trang đã load xong
+            hideLoader();
         });
     </script>
     

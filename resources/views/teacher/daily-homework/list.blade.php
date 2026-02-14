@@ -11,13 +11,16 @@
             </h1>
             <p class="text-muted mb-0 mt-2">Lớp: <strong>{{ $class->name }}</strong> - Năm học: {{ $class->school_year }}</p>
         </div>
-        <div>
+        <div id="header-actions">
             @if(Auth::user()->isAdmin())
                 <a href="{{ route('teacher.daily-homework.index') }}" class="btn btn-secondary me-2">
                     <i class="bi bi-arrow-left me-2"></i>Chọn lớp khác
                 </a>
             @endif
-            <a href="{{ route('teacher.daily-homework.create') }}?date={{ $selectedDate }}" class="btn btn-primary" id="create-homework-btn">
+            <a href="{{ route('teacher.daily-homework.create') }}?date={{ $selectedDate }}&class_id={{ $class->id }}" 
+               class="btn btn-primary" 
+               id="create-homework-btn"
+               {!! $homework ? 'style="display: none;"' : '' !!}>
                 <i class="bi bi-plus-circle me-2"></i>Tạo bài tập mới
             </a>
         </div>
@@ -25,30 +28,37 @@
 </div>
 
 <div class="row">
-    <!-- Lịch tuần -->
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-calendar-week me-2"></i>Lịch tuần</h5>
+    <!-- Sidebar: Lịch tuần (Dọc) -->
+    <div class="col-lg-4 col-xl-3 mb-4">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-calendar-week me-2"></i>Lịch tuần</h5>
+                <p class="text-muted small mb-0 mt-1" id="current-month-display">
+                    {{ \Carbon\Carbon::parse($selectedDate)->translatedFormat('F Y') }}
+                </p>
             </div>
             <div class="card-body p-0">
-                <div class="week-calendar">
+                <div class="vertical-calendar">
                     @foreach($weekDays as $day)
-                        <div class="calendar-day {{ $day['isToday'] ? 'today' : '' }} {{ $day['isSelected'] ? 'selected' : '' }} {{ in_array($day['date'], $weekHomework) ? 'has-homework' : '' }}"
+                        <div class="calendar-day-item {{ $day['isToday'] ? 'today' : '' }} {{ $day['isSelected'] ? 'selected' : '' }} {{ in_array($day['date'], $weekHomework) ? 'has-homework' : '' }}"
                              data-date="{{ $day['date'] }}"
                              onclick="loadHomework('{{ $day['date'] }}')">
-                            <div class="day-header">
-                                <span class="day-name">{{ $day['dayNameVi'] }}</span>
-                                @if($day['isToday'])
-                                    <span class="badge bg-primary">Hôm nay</span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="day-number-circle me-3">
+                                        {{ $day['day'] }}
+                                    </div>
+                                    <div>
+                                        <div class="day-name fw-bold">{{ $day['dayNameVi'] }}</div>
+                                        @if($day['isToday'])
+                                            <span class="badge bg-primary-soft text-primary x-small">Hôm nay</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if(in_array($day['date'], $weekHomework))
+                                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
                                 @endif
                             </div>
-                            <div class="day-number">{{ $day['day'] }}</div>
-                            @if(in_array($day['date'], $weekHomework))
-                                <div class="homework-indicator">
-                                    <i class="bi bi-check-circle-fill text-success"></i>
-                                </div>
-                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -56,72 +66,97 @@
         </div>
     </div>
 
-    <!-- Danh sách bài tập -->
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-list-ul me-2"></i>Bài tập ngày 
-                    <span id="selected-date-display">{{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}</span>
-                    (<span id="selected-day-name">{{ \Carbon\Carbon::parse($selectedDate)->locale('vi')->dayName }}</span>)
-                </h5>
+    <!-- Main: Danh sách bài tập -->
+    <div class="col-lg-8 col-xl-9">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom-0 py-4 px-4">
+                <div class="d-flex justify-content-between align-items-md-center flex-column flex-md-row gap-3">
+                    <div>
+                        <h4 class="mb-1 fw-bold text-dark">
+                            Bài tập 
+                            <span id="selected-day-name" class="text-primary">{{ \Carbon\Carbon::parse($selectedDate)->locale('vi')->dayName }}</span>
+                        </h4>
+                        <p class="text-muted mb-0 small" id="selected-date-display">{{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}</p>
+                    </div>
+                    <div class="d-flex gap-2" id="homework-actions-top">
+                        @if($homework)
+                            <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('{{ $selectedDate }}')">
+                                <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
+                            </button>
+                        @endif
+                    </div>
+                </div>
             </div>
-            <div class="card-body" id="homework-content">
+            <div class="card-body p-4 pt-0" id="homework-content">
                 @if($homework)
                     @if($homework->notes)
-                        <div class="alert alert-info mb-4">
-                            <i class="bi bi-info-circle me-2"></i><strong>Ghi chú:</strong> {{ $homework->notes }}
+                        <div class="alert alert-info border-0 shadow-sm bg-info bg-opacity-10 mb-4 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle-sm bg-info bg-opacity-20 text-info me-3">
+                                    <i class="bi bi-info-lg"></i>
+                                </div>
+                                <div class="small">
+                                    <strong class="text-info">Ghi chú chung:</strong> <span class="text-dark">{{ $homework->notes }}</span>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
                     @if($homework->items->count() > 0)
-                        <div class="homework-items">
+                        <div class="homework-list" id="homework-items-list">
                             @foreach($homework->items as $item)
-                                <div class="homework-item mb-3">
-                                    <div class="card border-start border-4 border-primary">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <h6 class="mb-0">
-                                                    <i class="bi bi-book me-2 text-primary"></i>
-                                                    <strong>{{ $item->subject->name }}</strong>
-                                                </h6>
-                                                @if($item->due_date)
-                                                    <span class="badge bg-warning text-dark">
-                                                        <i class="bi bi-calendar-event me-1"></i>
-                                                        Hạn: {{ $item->due_date->format('d/m/Y') }}
-                                                    </span>
-                                                @endif
+                                <div class="homework-card-wrapper mb-4">
+                                    <div class="card border-0 shadow-sm premium-homework-card hover-translate transition">
+                                        <div class="card-body p-4">
+                                            <div class="row align-items-center">
+                                                <div class="col-auto">
+                                                    <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                                                        <i class="bi bi-book"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="col">
+                                                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                                                        <h5 class="mb-0 fw-bold text-dark me-3">{{ $item->subject->name }}</h5>
+                                                        @if($item->due_date)
+                                                            <span class="badge bg-warning-soft text-warning fw-bold px-3 py-2 rounded-pill">
+                                                                <i class="bi bi-calendar-event me-2"></i>Hạn nộp: {{ $item->due_date->format('d/m/Y') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="homework-full-content text-muted lh-base">
+                                                        {!! nl2br(e($item->content)) !!}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p class="mb-0 text-muted">{{ $item->content }}</p>
                                         </div>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
 
-                        <div class="mt-4 pt-3 border-top d-flex gap-2">
-                            <a href="{{ route('teacher.daily-homework.edit', $homework) }}" class="btn btn-outline-primary">
+                        <div class="mt-5 pt-4 border-top d-flex gap-3 justify-content-center" id="homework-actions-bottom">
+                            <a href="{{ route('teacher.daily-homework.edit', $homework) }}" class="btn btn-outline-primary px-4 rounded-pill">
                                 <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
                             </a>
-                            <button type="button" class="btn btn-success" onclick="showZaloModal('{{ $selectedDate }}')">
-                                <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
+                            <button type="button" class="btn btn-danger px-4 rounded-pill" onclick="deleteHomework({{ $homework->id }})">
+                                <i class="bi bi-trash me-2"></i>Xóa bài tập
                             </button>
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <i class="bi bi-inbox display-1 text-muted"></i>
-                            <p class="text-muted mt-3">Chưa có bài tập nào cho ngày này</p>
-                            <a href="{{ route('teacher.daily-homework.create') }}?date={{ $selectedDate }}" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-2"></i>Tạo bài tập cho ngày này
+                            <i class="bi bi-journals display-4 text-muted opacity-25 mb-3"></i>
+                            <h6 class="fw-bold text-muted">Chưa có nội dung bài tập</h6>
+                            <a href="{{ route('teacher.daily-homework.create') }}?date={{ $selectedDate }}" class="btn btn-primary btn-sm px-4 rounded-pill mt-2">
+                                <i class="bi bi-plus-lg me-2"></i>Giao bài
                             </a>
                         </div>
                     @endif
                 @else
                     <div class="text-center py-5">
-                        <i class="bi bi-inbox display-1 text-muted"></i>
-                        <p class="text-muted mt-3">Chưa có bài tập nào cho ngày này</p>
-                        <a href="{{ route('teacher.daily-homework.create') }}?date={{ $selectedDate }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>Tạo bài tập cho ngày này
+                        <i class="bi bi-calendar2-x display-4 text-muted opacity-25 mb-3"></i>
+                        <h6 class="fw-bold text-muted">Chưa có bài tập cho ngày này</h6>
+                        <a href="{{ route('teacher.daily-homework.create') }}?date={{ $selectedDate }}&class_id={{ $class->id }}" class="btn btn-primary btn-sm px-4 rounded-pill mt-2">
+                            <i class="bi bi-plus-lg me-2"></i>Tạo bài tập mới
                         </a>
                     </div>
                 @endif
@@ -132,88 +167,115 @@
 
 @push('styles')
 <style>
-    .week-calendar {
+    /* Vertical Calendar Styles */
+    .vertical-calendar {
         display: flex;
         flex-direction: column;
     }
-
-    .calendar-day {
-        padding: 1rem;
-        border-bottom: 1px solid #e9ecef;
+    
+    .calendar-day-item {
+        padding: 1.25rem 1.5rem;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f1f5f9;
         position: relative;
     }
-
-    .calendar-day:last-child {
-        border-bottom: none;
+    
+    .calendar-day-item:hover {
+        background-color: #f8fafc;
     }
-
-    .calendar-day:hover {
-        background-color: #f8f9fa;
-    }
-
-    .calendar-day.today {
-        background-color: #e7f3ff;
+    
+    .calendar-day-item.selected {
+        background-color: #f1f5f9;
         border-left: 4px solid #0d6efd;
     }
-
-    .calendar-day.selected {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    
+    .calendar-day-item.today {
+        background-color: #f8faff;
+    }
+    
+    .day-number-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background-color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #475569;
+        font-size: 1.1rem;
+        transition: all 0.2s;
+    }
+    
+    .calendar-day-item.selected .day-number-circle {
+        background-color: #0d6efd;
         color: white;
     }
-
-    .calendar-day.has-homework::after {
-        content: '';
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        width: 8px;
-        height: 8px;
-        background-color: #198754;
-        border-radius: 50%;
-    }
-
-    .calendar-day.selected.has-homework::after {
-        background-color: white;
-    }
-
-    .day-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
+    
     .day-name {
-        font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        color: #334155;
     }
-
-    .day-number {
-        font-size: 1.5rem;
-        font-weight: 700;
+    
+    .bg-primary-soft { background-color: rgba(13, 110, 253, 0.1); }
+    .bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); }
+    .x-small { font-size: 0.75rem; }
+    
+    /* Homework List Styles */
+    .premium-homework-card {
+        border-radius: 16px;
+        transition: all 0.3s ease;
     }
-
-    .homework-indicator {
-        position: absolute;
-        bottom: 0.5rem;
-        right: 0.5rem;
+    
+    .hover-translate:hover {
+        transform: translateX(8px);
+        box-shadow: 0 10px 20px -10px rgba(0,0,0,0.1) !important;
     }
-
-    .homework-item {
-        animation: fadeIn 0.3s;
+    
+    .homework-full-content {
+        font-size: 1rem;
+        color: #475569;
+        white-space: pre-wrap;
     }
-
-    @keyframes fadeIn {
+    /* Animation */
+    @keyframes slideInUp {
         from {
+            transform: translateY(20px);
             opacity: 0;
-            transform: translateY(-10px);
         }
         to {
-            opacity: 1;
             transform: translateY(0);
+            opacity: 1;
         }
+    }
+    
+    #homework-content.loading {
+        opacity: 0.5;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .icon-circle-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
     }
 </style>
 @endpush
@@ -221,35 +283,42 @@
 @push('scripts')
 <script>
     function loadHomework(date) {
-        // Cập nhật selected date
-        document.querySelectorAll('.calendar-day').forEach(day => {
+        // Thêm trạng thái loading
+        const contentDiv = document.getElementById('homework-content');
+        contentDiv.classList.add('loading');
+
+        // Cập nhật sidebar selection
+        document.querySelectorAll('.calendar-day-item').forEach(day => {
             day.classList.remove('selected');
             if (day.dataset.date === date) {
                 day.classList.add('selected');
             }
         });
 
-        // Cập nhật hiển thị ngày
+        // Cập nhật hiển thị ngày và tháng
         const dateObj = new Date(date);
-        const dayNames = ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+        const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
         const dayNameVi = dayNames[dateObj.getDay()];
         const formattedDate = dateObj.toLocaleDateString('vi-VN');
+        
+        // Định dạng tháng: "Tháng 2 2026"
+        const monthYear = dateObj.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+        const monthDisplay = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
 
         document.getElementById('selected-date-display').textContent = formattedDate;
         document.getElementById('selected-day-name').textContent = dayNameVi;
+        document.getElementById('current-month-display').textContent = monthDisplay;
         
-        // Cập nhật nút "Tạo bài tập mới" với ngày được chọn
+        // Cập nhật nút "Tạo bài tập mới"
         const createBtn = document.getElementById('create-homework-btn');
         if (createBtn) {
-            createBtn.href = `{{ route('teacher.daily-homework.create') }}?date=${date}`;
+            createBtn.href = `{{ route('teacher.daily-homework.create') }}?date=${date}&class_id={{ $class->id }}`;
         }
 
         // Load homework via AJAX
-        @if(Auth::user()->isAdmin())
-            fetch(`{{ route('teacher.daily-homework.get') }}?class_id={{ $class->id }}&date=${date}`)
-        @else
-            fetch(`{{ route('teacher.daily-homework.get') }}?date=${date}`)
-        @endif
+        const fetchUrl = `{{ route('teacher.daily-homework.get') }}?class_id={{ $class->id }}&date=${date}`;
+
+        fetch(fetchUrl)
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(data => {
@@ -259,75 +328,96 @@
                 return response.json();
             })
             .then(data => {
-                const contentDiv = document.getElementById('homework-content');
+                contentDiv.classList.remove('loading');
                 
                 if (data.success && data.homework) {
+                    // Ẩn nút tạo mới nếu đã có bài tập
+                    if (createBtn) createBtn.style.display = 'none';
+
                     let html = '';
                     
+                    // Top Actions
+                    const actionTop = document.getElementById('homework-actions-top');
+                    if (actionTop) {
+                        actionTop.innerHTML = `
+                            <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('${date}')">
+                                <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
+                            </button>
+                        `;
+                    }
+
                     if (data.homework.notes) {
-                        html += `<div class="alert alert-info mb-4">
-                            <i class="bi bi-info-circle me-2"></i><strong>Ghi chú:</strong> ${data.homework.notes}
-                        </div>`;
+                        html += `
+                            <div class="alert alert-info border-0 shadow-sm bg-info bg-opacity-10 mb-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle-sm bg-info bg-opacity-20 text-info me-3">
+                                        <i class="bi bi-info-lg"></i>
+                                    </div>
+                                    <div class="small">
+                                        <strong class="text-info">Ghi chú chung:</strong> <span class="text-dark">${data.homework.notes}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     }
 
                     if (data.items && data.items.length > 0) {
-                        html += '<div class="homework-items">';
-                        data.items.forEach(item => {
+                        html += '<div class="homework-list" id="homework-items-list">';
+                        data.items.forEach((item, index) => {
                             html += `
-                                <div class="homework-item mb-3">
-                                    <div class="card border-start border-4 border-primary">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <h6 class="mb-0">
-                                                    <i class="bi bi-book me-2 text-primary"></i>
-                                                    <strong>${item.subject_name}</strong>
-                                                </h6>
-                                                ${item.due_date ? `<span class="badge bg-warning text-dark">
-                                                    <i class="bi bi-calendar-event me-1"></i>
-                                                    Hạn: ${item.due_date}
-                                                </span>` : ''}
+                                <div class="homework-card-wrapper mb-4" style="animation: slideInUp 0.4s ease forwards; animation-delay: ${index * 0.05}s; opacity: 0;">
+                                    <div class="card border-0 shadow-sm premium-homework-card hover-translate transition">
+                                        <div class="card-body p-4">
+                                            <div class="row align-items-center">
+                                                <div class="col-auto">
+                                                    <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                                                        <i class="bi bi-book"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="col">
+                                                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                                                        <h5 class="mb-0 fw-bold text-dark me-3">${item.subject_name}</h5>
+                                                        ${item.due_date ? `
+                                                            <span class="badge bg-warning-soft text-warning fw-bold px-3 py-2 rounded-pill">
+                                                                <i class="bi bi-calendar-event me-2"></i>Hạn nộp: ${item.due_date}
+                                                            </span>
+                                                        ` : ''}
+                                                    </div>
+                                                    <div class="homework-full-content text-muted lh-base">
+                                                        ${item.content.replace(/\n/g, '<br>')}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p class="mb-0 text-muted">${item.content}</p>
                                         </div>
                                     </div>
                                 </div>
                             `;
                         });
                         html += '</div>';
-                        // Kiểm tra xem có phải ngày hôm nay / quá khứ không
+
+                        // Bottom Actions
                         const today = new Date().toISOString().split('T')[0];
-                        const isToday = date === today;
                         const isPast = date < today;
                         
-                        let actionButtons = `
-                            <div class="mt-4 pt-3 border-top d-flex gap-2 flex-wrap">
+                        html += `
+                            <div class="mt-5 pt-4 border-top d-flex gap-3 justify-content-center">
                                 ${!isPast ? `
-                                    <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary">
+                                    <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary px-4 rounded-pill">
                                         <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
                                     </a>
-                                ` : ``}
-                                <button type="button" class="btn btn-success" onclick="showZaloModal('${date}')">
-                                    <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
-                                </button>
-                        `;
-                        
-                        if (isToday) {
-                            actionButtons += `
-                                <button type="button" class="btn btn-danger" onclick="deleteHomework(${data.homework.id})">
+                                ` : ''}
+                                <button type="button" class="btn btn-danger px-4 rounded-pill" onclick="deleteHomework(${data.homework.id})">
                                     <i class="bi bi-trash me-2"></i>Xóa bài tập
                                 </button>
-                            `;
-                        }
-                        
-                        actionButtons += `</div>`;
-                        html += actionButtons;
+                            </div>
+                        `;
                     } else {
                         html = `
                             <div class="text-center py-5">
-                                <i class="bi bi-inbox display-1 text-muted"></i>
-                                <p class="text-muted mt-3">Chưa có bài tập nào cho ngày này</p>
-                                <a href="/teacher/daily-homework/create?date=${date}" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle me-2"></i>Tạo bài tập cho ngày này
+                                <i class="bi bi-journals display-4 text-muted opacity-25 mb-3"></i>
+                                <h6 class="fw-bold text-muted">Chưa có nội dung bài tập</h6>
+                                <a href="/teacher/daily-homework/create?date=${date}&class_id={{ $class->id }}" class="btn btn-primary btn-sm px-4 rounded-pill mt-2">
+                                    <i class="bi bi-plus-lg me-2"></i>Giao bài
                                 </a>
                             </div>
                         `;
@@ -335,18 +425,26 @@
                     
                     contentDiv.innerHTML = html;
                 } else {
+                    // Hiện nút tạo mới nếu chưa có bài tập
+                    if (createBtn) createBtn.style.display = 'inline-block';
+
+                    // Xóa actions top nếu không có bài tập
+                    const actionTop = document.getElementById('homework-actions-top');
+                    if (actionTop) actionTop.innerHTML = '';
+
                     contentDiv.innerHTML = `
                         <div class="text-center py-5">
-                            <i class="bi bi-inbox display-1 text-muted"></i>
-                            <p class="text-muted mt-3">Chưa có bài tập nào cho ngày này</p>
-                                <a href="/teacher/daily-homework/create?date=${date}" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle me-2"></i>Tạo bài tập cho ngày này
-                                </a>
+                            <i class="bi bi-calendar2-x display-4 text-muted opacity-25 mb-3"></i>
+                            <h6 class="fw-bold text-muted">Chưa có bài tập cho ngày này</h6>
+                            <a href="/teacher/daily-homework/create?date=${date}&class_id={{ $class->id }}" class="btn btn-primary btn-sm px-4 rounded-pill mt-2">
+                                <i class="bi bi-plus-lg me-2"></i>Tạo bài tập mới
+                            </a>
                         </div>
                     `;
                 }
             })
             .catch(error => {
+                contentDiv.classList.remove('loading');
                 console.error('Error:', error);
                 Swal.fire({
                     icon: 'error',
@@ -397,11 +495,7 @@
             }
         });
         
-        @if(Auth::user()->isAdmin())
-            const url = `{{ route('teacher.daily-homework.zalo-message') }}?class_id={{ $class->id }}&date=${date}&include_day_after_next=${includeDayAfterNext ? 1 : 0}`;
-        @else
-            const url = `{{ route('teacher.daily-homework.zalo-message') }}?date=${date}&include_day_after_next=${includeDayAfterNext ? 1 : 0}`;
-        @endif
+        const url = `{{ route('teacher.daily-homework.zalo-message') }}?class_id={{ $class->id }}&date=${date}&include_day_after_next=${includeDayAfterNext ? 1 : 0}`;
 
         fetch(url)
             .then(response => {

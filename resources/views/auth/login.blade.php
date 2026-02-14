@@ -15,48 +15,43 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #f0f2f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
         .login-card {
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,.2);
+            border-radius: 15px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
         }
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #0d6efd;
             color: white;
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             text-align: center;
         }
         .login-body {
-            padding: 2.5rem;
+            padding: 2rem;
             background: white;
         }
         .form-control {
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #ced4da;
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 0.75rem;
+            border-radius: 8px;
+            padding: 0.6rem;
             font-weight: 600;
-            transition: all 0.3s;
-        }
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
     </style>
 </head>
@@ -161,7 +156,7 @@
                 icon: 'error',
                 title: 'Lỗi!',
                 html: '<ul class="text-start">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
-                confirmButtonColor: '#667eea'
+                confirmButtonColor: '#0d6efd'
             });
         @endif
     </script>

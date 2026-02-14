@@ -14,12 +14,12 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin lớp học</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>Thông tin lớp học</h5>
             </div>
             <div class="card-body">
-                <form action="{{ route('admin.classes.update', $class) }}" method="POST">
+                <form action="{{ route('admin.classes.update', $class) }}" method="POST" class="needs-validation" novalidate>
                     @csrf
                     @method('PUT')
                     
@@ -69,12 +69,12 @@
                         @enderror
                     </div>
 
-                    <div class="d-flex justify-content-between pt-3 border-top">
-                        <a href="{{ route('admin.classes.index') }}" class="btn btn-secondary">
+                    <div class="d-flex justify-content-between pt-3 border-top mt-4">
+                        <a href="{{ route('admin.classes.index') }}" class="btn btn-secondary px-4">
                             <i class="bi bi-arrow-left me-2"></i>Quay lại
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-2"></i>Cập nhật
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                            <i class="bi bi-check-circle me-2"></i>Cập nhật lớp học
                         </button>
                     </div>
                 </form>

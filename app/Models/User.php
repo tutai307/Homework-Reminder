@@ -95,11 +95,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is academic sub monitor (lớp phó học tập).
+     */
+    public function isAcademicSubMonitor(): bool
+    {
+        return $this->role === 'academic_sub_monitor' || $this->hasRole('academic_sub_monitor');
+    }
+
+    /**
      * Check if user can create homework.
      */
     public function canCreateHomework(): bool
     {
-        return $this->isAdmin() || $this->isTeacher() || $this->isClassMonitor();
+        return $this->isAdmin() || $this->isTeacher() || $this->isClassMonitor() || $this->isAcademicSubMonitor();
     }
 
     /**

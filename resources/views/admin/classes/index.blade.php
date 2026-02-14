@@ -9,56 +9,70 @@
             <h1 class="page-title">
                 <i class="bi bi-people-fill me-2 text-primary"></i>Quản lý lớp học
             </h1>
-            <p class="text-muted mb-0 mt-2">Quản lý danh sách các lớp học trong hệ thống</p>
+            <p class="text-muted mb-0 mt-2">Đăng ký và quản lý các lớp học trong hệ thống</p>
         </div>
-        <a href="{{ route('admin.classes.create') }}" class="btn btn-primary">
+        <a href="{{ route('admin.classes.create') }}" class="btn btn-primary shadow-sm">
             <i class="bi bi-plus-circle me-2"></i>Thêm lớp học mới
         </a>
     </div>
 </div>
 
 @if($classes->count() > 0)
-    <div class="card">
+    <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th style="width: 60px;">STT</th>
-                            <th>Tên lớp</th>
+                            <th class="ps-4" style="width: 80px;">STT</th>
+                            <th>Thông tin lớp học</th>
                             <th>Năm học</th>
                             <th>Mô tả</th>
-                            <th style="width: 120px;">Ngày tạo</th>
-                            <th style="width: 150px;" class="text-center">Thao tác</th>
+                            <th>Ngày cập nhật</th>
+                            <th class="text-center pe-4" style="width: 150px;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($classes as $class)
                             <tr>
-                                <td><span class="badge bg-secondary">{{ $loop->iteration }}</span></td>
-                                <td>
-                                    <strong class="text-primary">{{ $class->name }}</strong>
+                                <td class="ps-4">
+                                    <span class="text-muted fw-medium">{{ $loop->iteration + ($classes->currentPage() - 1) * $classes->perPage() }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-info text-dark">{{ $class->school_year }}</span>
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-circle-sm bg-primary bg-opacity-10 me-3">
+                                            <i class="bi bi-building text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">{{ $class->name }}</div>
+                                            <div class="small text-muted text-uppercase">Lớp học chính quy</div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    <span class="text-muted">{{ Str::limit($class->description ?? 'Không có mô tả', 50) }}</span>
+                                    <span class="badge bg-soft-info text-info border border-info border-opacity-25 px-3 py-2">
+                                        <i class="bi bi-calendar-event me-1"></i>{{ $class->school_year }}
+                                    </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted">
-                                        <i class="bi bi-calendar3 me-1"></i>{{ $class->created_at->format('d/m/Y') }}
-                                    </small>
+                                    <span class="text-muted small" title="{{ $class->description }}">
+                                        {{ Str::limit($class->description ?? 'Không có mô tả', 40) }}
+                                    </span>
                                 </td>
                                 <td>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-clock-history me-1"></i>{{ $class->updated_at->format('d/m/Y') }}
+                                    </div>
+                                </td>
+                                <td class="text-center pe-4">
                                     <div class="d-flex gap-2 justify-content-center">
-                                        <a href="{{ route('admin.classes.edit', $class) }}" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                        <a href="{{ route('admin.classes.edit', $class) }}" class="btn btn-sm btn-outline-primary rounded-circle shadow-sm" title="Sửa">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form action="{{ route('admin.classes.destroy', $class) }}" method="POST" class="d-inline delete-form" onsubmit="return false;">
+                                        <form action="{{ route('admin.classes.destroy', $class) }}" method="POST" class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger delete-btn" title="Xóa">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle shadow-sm" title="Xóa">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -70,51 +84,30 @@
                 </table>
             </div>
             
-            <div class="card-footer bg-white border-top">
-                {{ $classes->links() }}
-            </div>
+            @if($classes->hasPages())
+                <div class="card-footer bg-white border-top py-3">
+                    {{ $classes->links() }}
+                </div>
+            @endif
         </div>
     </div>
 @else
-    <div class="card">
+    <div class="card border-0 shadow-sm">
         <div class="card-body text-center py-5">
-            <i class="bi bi-inbox display-1 text-muted"></i>
-            <h4 class="mt-3 text-muted">Chưa có lớp học nào</h4>
-            <p class="text-muted">Bắt đầu bằng cách thêm lớp học đầu tiên</p>
-            <a href="{{ route('admin.classes.create') }}" class="btn btn-primary mt-3">
+            <div class="rounded-circle bg-light d-inline-flex p-4 mb-4">
+                <i class="bi bi-building-exclamation display-4 text-muted"></i>
+            </div>
+            <h4 class="text-muted">Chưa có lớp học nào</h4>
+            <p class="text-muted">Bạn cần khởi tạo lớp học trước khi có thể gán học sinh vào hệ thống.</p>
+            <a href="{{ route('admin.classes.create') }}" class="btn btn-primary mt-3 px-4 shadow-sm">
                 <i class="bi bi-plus-circle me-2"></i>Thêm lớp học đầu tiên
             </a>
         </div>
     </div>
 @endif
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const deleteForms = document.querySelectorAll('.delete-form');
-        deleteForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const form = this;
-                
-                Swal.fire({
-                    title: 'Bạn có chắc chắn?',
-                    text: "Bạn có muốn xóa lớp học này không? Hành động này không thể hoàn tác!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="bi bi-trash me-1"></i>Có, xóa!',
-                    cancelButtonText: 'Hủy',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            });
-        });
-    });
-</script>
-@endpush
+
+<style>
+    .bg-soft-info { background-color: rgba(13, 202, 240, 0.1); }
+</style>
 @endsection
 

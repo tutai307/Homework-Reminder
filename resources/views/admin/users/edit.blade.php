@@ -14,12 +14,12 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin người dùng</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>Thông tin người dùng</h5>
             </div>
             <div class="card-body">
-                <form action="{{ route('admin.users.update', $user) }}" method="POST">
+                <form action="{{ route('admin.users.update', $user) }}" method="POST" class="needs-validation" novalidate>
                     @csrf
                     @method('PUT')
                     
@@ -53,88 +53,70 @@
                         @enderror
                     </div>
 
-                    <div class="mb-4">
-                        <label for="password" class="form-label fw-semibold">
-                            <i class="bi bi-lock me-1 text-primary"></i>Mật khẩu mới (để trống nếu không đổi)
-                        </label>
-                        <input type="password" 
-                               class="form-control form-control-lg @error('password') is-invalid @enderror" 
-                               id="password" 
-                               name="password">
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="bi bi-lock me-1 text-primary"></i>Mật khẩu mới
+                            </label>
+                            <input type="password" 
+                                   class="form-control form-control-lg @error('password') is-invalid @enderror" 
+                                   id="password" 
+                                   name="password"
+                                   placeholder="Để trống nếu không đổi">
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                    <div class="mb-4">
-                        <label for="password_confirmation" class="form-label fw-semibold">
-                            <i class="bi bi-lock-fill me-1 text-primary"></i>Xác nhận mật khẩu mới
-                        </label>
-                        <input type="password" 
-                               class="form-control form-control-lg" 
-                               id="password_confirmation" 
-                               name="password_confirmation">
+                        <div class="col-md-6 mb-4">
+                            <label for="password_confirmation" class="form-label fw-semibold">
+                                <i class="bi bi-lock-fill me-1 text-primary"></i>Xác nhận mật khẩu mới
+                            </label>
+                            <input type="password" 
+                                   class="form-control form-control-lg" 
+                                   id="password_confirmation" 
+                                   name="password_confirmation"
+                                   placeholder="Nhập lại mật khẩu mới">
+                        </div>
                     </div>
 
                     <div class="mb-4">
                         <label for="role" class="form-label fw-semibold">
                             <i class="bi bi-shield-check me-1 text-primary"></i>Vai trò <span class="text-danger">*</span>
                         </label>
-                        <select name="role" id="role" class="form-select form-select-lg @error('role') is-invalid @enderror" required>
-                            <option value="">-- Chọn vai trò --</option>
+                        <select name="role" id="role" class="form-select select2 @error('role') is-invalid @enderror" required data-placeholder="-- Chọn vai trò --">
+                            <option value=""></option>
                             <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="teacher" {{ old('role', $user->role) == 'teacher' ? 'selected' : '' }}>Giáo viên</option>
                             <option value="class_monitor" {{ old('role', $user->role) == 'class_monitor' ? 'selected' : '' }}>Lớp trưởng</option>
+                            <option value="academic_sub_monitor" {{ old('role', $user->role) == 'academic_sub_monitor' ? 'selected' : '' }}>Lớp phó học tập</option>
                         </select>
                         @error('role')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-key me-1 text-primary"></i>Roles
+                    <div class="mb-4" id="class-selection-container">
+                        <label for="classes" class="form-label fw-semibold">
+                            <i class="bi bi-mortarboard me-1 text-primary"></i>Gán lớp 
+                            <span id="class-selection-label" class="text-muted small"></span>
                         </label>
-                        <div class="row">
-                            @foreach($roles as $role)
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="roles[]" value="{{ $role->id }}" id="role_{{ $role->id }}"
-                                               {{ $user->roles->contains($role->id) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="role_{{ $role->id }}">
-                                            {{ $role->name }}
-                                        </label>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-people me-1 text-primary"></i>Gán lớp (chỉ dành cho giáo viên)
-                        </label>
-                        <div class="row">
+                        <select name="classes[]" id="classes" class="form-select select2" multiple data-placeholder="-- Chọn lớp --">
                             @foreach($classes as $class)
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="classes[]" value="{{ $class->id }}" id="class_{{ $class->id }}"
-                                               {{ $user->classes->contains($class->id) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="class_{{ $class->id }}">
-                                            {{ $class->name }} - {{ $class->school_year }}
-                                        </label>
-                                    </div>
-                                </div>
+                                <option value="{{ $class->id }}" {{ $user->classes->contains($class->id) ? 'selected' : '' }}>
+                                    {{ $class->name }} ({{ $class->school_year }})
+                                </option>
                             @endforeach
-                        </div>
+                        </select>
+                        <div class="form-text mt-2" id="class-help-text"></div>
                     </div>
 
-                    <div class="d-flex justify-content-between pt-3 border-top">
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
+                    <div class="d-flex justify-content-between pt-3 border-top mt-4">
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary px-4">
                             <i class="bi bi-arrow-left me-2"></i>Quay lại
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-2"></i>Cập nhật
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                            <i class="bi bi-check-circle me-2"></i>Cập nhật thông tin
                         </button>
                     </div>
                 </form>
@@ -142,5 +124,54 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        const roleSelect = $('#role');
+        const classContainer = $('#class-selection-container');
+        const classSelect = $('#classes');
+        const classLabel = $('#class-selection-label');
+        const helpText = $('#class-help-text');
+
+        function updateClassSection() {
+            const role = roleSelect.val();
+            
+            // Reset state
+            classContainer.show();
+            classSelect.prop('disabled', false);
+            
+            if (role === 'admin') {
+                classContainer.hide();
+                // classSelect.val(null).trigger('change'); // Don't clear on edit unless intentional?
+            } else if (role === 'teacher') {
+                classLabel.text('(Có thể chọn nhiều lớp)');
+                classSelect.attr('multiple', 'multiple');
+                helpText.text('Giáo viên có thể phụ trách nhiều lớp học.');
+            } else if (role === 'class_monitor' || role === 'academic_sub_monitor') {
+                classLabel.text('(Chỉ được chọn 1 lớp)');
+                classSelect.removeAttr('multiple');
+                helpText.text('Ban cán sự lớp chỉ được gán cho duy nhất 1 lớp.');
+                
+                // Nếu đang có nhiều hơn 1 value, chỉ giữ lại cái đầu tiên
+                let currentVal = classSelect.val();
+                if (Array.isArray(currentVal) && currentVal.length > 1) {
+                    classSelect.val(currentVal[0]).trigger('change');
+                }
+            }
+            
+            // Re-initialize Select2
+            classSelect.select2({
+                placeholder: classSelect.data('placeholder'),
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        roleSelect.on('change', updateClassSection);
+        updateClassSection(); // Initial run
+    });
+</script>
+@endpush
 @endsection
 

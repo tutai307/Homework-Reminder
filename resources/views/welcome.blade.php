@@ -11,7 +11,7 @@
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}" sizes="any">
         <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
         <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-        <meta name="theme-color" content="#667eea">
+        <meta name="theme-color" content="#0d6efd">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

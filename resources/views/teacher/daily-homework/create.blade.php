@@ -31,11 +31,9 @@
         <h5 class="mb-0">Nhập bài tập cho các tiết học</h5>
     </div>
     <div class="card-body">
-        <form action="{{ route('teacher.daily-homework.store') }}" method="POST" id="homework-form">
+        <form action="{{ route('teacher.daily-homework.store') }}" method="POST" id="homework-form" class="needs-validation" novalidate>
             @csrf
-            @if(Auth::user()->isAdmin())
-                <input type="hidden" name="class_id" value="{{ $class->id }}">
-            @endif
+            <input type="hidden" name="class_id" value="{{ $class->id }}">
             <input type="hidden" name="date" value="{{ $date }}">
 
             @if($timetables->count() > 0)
@@ -90,11 +88,12 @@
                                                 <label for="homework_{{ $period }}_{{ $subject->id }}_due_date" class="form-label small">
                                                     Hạn nộp (tùy chọn)
                                                 </label>
-                                                <input type="date" 
+                                                <input type="text" 
                                                        name="homework[{{ $index }}][due_date]" 
                                                        id="homework_{{ $period }}_{{ $subject->id }}_due_date" 
-                                                       class="form-control @error('homework.'.$index.'.due_date') is-invalid @enderror" 
-                                                       value="{{ old('homework.'.$index.'.due_date', $existingItem ? ($existingItem->due_date ? $existingItem->due_date->format('Y-m-d') : '') : '') }}">
+                                                       class="form-control datepicker @error('homework.'.$index.'.due_date') is-invalid @enderror" 
+                                                       value="{{ old('homework.'.$index.'.due_date', $existingItem ? ($existingItem->due_date ? $existingItem->due_date->format('Y-m-d') : '') : '') }}"
+                                                       placeholder="Chọn ngày hạn nộp">
                                                 @error('homework.'.$index.'.due_date')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror

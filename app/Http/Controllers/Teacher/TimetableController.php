@@ -85,25 +85,41 @@ class TimetableController extends Controller
             'timetable.*.*' => 'nullable|exists:subjects,id',
         ]);
 
-        // Xóa thời khóa biểu cũ của lớp
-        Timetable::where('class_id', $class->id)->delete();
+        try {
+            \DB::beginTransaction();
 
-        // Lưu thời khóa biểu mới
-        foreach ($request->timetable as $weekday => $periods) {
-            foreach ($periods as $period => $subjectId) {
-                if ($subjectId) {
-                    Timetable::create([
-                        'class_id' => $class->id,
-                        'weekday' => $weekday,
-                        'subject_id' => $subjectId,
-                        'period' => $period,
-                    ]);
+            // Xóa thời khóa biểu cũ của lớp
+            Timetable::where('class_id', $class->id)->delete();
+
+            // Lưu thời khóa biểu mới
+            if ($request->has('timetable')) {
+                foreach ($request->timetable as $weekday => $periods) {
+                    foreach ($periods as $period => $subjectId) {
+                        if ($subjectId) {
+                            Timetable::create([
+                                'class_id' => $class->id,
+                                'weekday' => (int)$weekday,
+                                'subject_id' => (int)$subjectId,
+                                'period' => (int)$period,
+                            ]);
+                        }
+                    }
                 }
             }
-        }
 
-        return redirect()->route('teacher.timetables.index')
-            ->with('success', 'Thời khóa biểu đã được lưu thành công.');
+            \DB::commit();
+
+            return redirect()->route('teacher.timetables.index')
+                ->with('success', 'Thời khóa biểu đã được lưu thành công.');
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Lỗi khi lưu thời khóa biểu: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Đã xảy ra lỗi khi lưu thời khóa biểu. Vui lòng thử lại. ' . (config('app.debug') ? $e->getMessage() : ''));
+        }
     }
 }
 

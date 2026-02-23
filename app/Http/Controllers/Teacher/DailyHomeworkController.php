@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Teacher;
 use App\Http\Controllers\Controller;
 use App\Models\ClassModel;
 use App\Models\Homework;
+use App\Models\HomeworkItem;
 use App\Models\Timetable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -150,23 +151,57 @@ class DailyHomeworkController extends Controller
             'date' => 'required|date',
         ]);
 
+        $date = $request->date; // Use a local variable for date
+
         $homework = Homework::where('class_id', $classId)
-            ->where('date', $request->date)
-            ->with(['items.subject', 'creator'])
+            ->where('date', $date)
+            ->with('items.subject')
             ->first();
 
-        if ($homework) {
+        // Lấy thêm các bài tập ĐẾN HẠN vào ngày này (từ các ngày giao trước đó)
+        $dueItems = HomeworkItem::whereHas('homework', function($query) use ($classId) {
+                $query->where('class_id', $classId);
+            })
+            ->whereDate('due_date', $date)
+            ->with('subject')
+            ->get();
+
+        if ($homework || $dueItems->count() > 0) {
+            $itemsFromHomework = $homework ? $homework->items : collect();
+            
+            // 1. Danh sách bài tập được GIAO TRONG NGÀY (assigned_items)
+            $assignedGroups = $itemsFromHomework->groupBy('subject_id')->map(function ($group) {
+                $first = $group->first();
+                return [
+                    'subject_name' => $first->subject->name,
+                    'content' => $group->pluck('content')->unique()->implode("\n"),
+                    'due_date' => $first->due_date ? $first->due_date->format('d/m/Y') : null,
+                    'is_due_today' => false, // Giao mới thì không tính là "đến hạn nộp" trong ngữ cảnh này
+                ];
+            })->values();
+
+            // 2. Danh sách tổng hợp dùng cho PREVIEW (preview_items)
+            $allItems = $itemsFromHomework->concat($dueItems);
+            $previewGroups = $allItems->groupBy('subject_id')->map(function ($group) use ($date) {
+                $first = $group->first();
+                $isDueToday = $group->contains(function($item) use ($date) {
+                    return $item->due_date && $item->due_date->format('Y-m-d') === $date;
+                });
+
+                return [
+                    'subject_name' => $first->subject->name,
+                    'content' => $group->pluck('content')->unique()->implode("\n"),
+                    'due_date' => $first->due_date ? $first->due_date->format('d/m/Y') : null,
+                    'is_due_today' => $isDueToday,
+                ];
+            })->values();
+
             return response()->json([
                 'success' => true,
-                'homework' => $homework,
-                'items' => $homework->items->map(function($item) {
-                    return [
-                        'id' => $item->id,
-                        'subject_name' => $item->subject->name,
-                        'content' => $item->content,
-                        'due_date' => $item->due_date ? $item->due_date->format('d/m/Y') : null,
-                    ];
-                }),
+                'homework' => $homework, // Có thể null
+                'items' => $assignedGroups, // Trang chính chỉ hiện bài tập được giao
+                'assigned_items' => $assignedGroups,
+                'preview_items' => $previewGroups, // Modal Preview hiện tất cả
             ]);
         }
 
@@ -457,21 +492,30 @@ class DailyHomeworkController extends Controller
             $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
             
             if ($items->count() > 0) {
-                foreach ($items as $data) {
-                    $item = $data['item'];
-                    $message .= "• {$item->subject->name}";
-                    
-                    if ($data['due_date']) {
-                        $dueDateStr = $data['due_date']->format('d/m/Y');
-                        $message .= " (Hạn: {$dueDateStr})";
-                    }
-                    
-                    $message .= "\n";
-                    $message .= "  {$item->content}\n\n";
+            // Group items by subject to avoid duplicates in Zalo message
+            $groupedBySubject = $items->groupBy(function($data) {
+                return $data['item']->subject_id;
+            });
+
+            foreach ($groupedBySubject as $subjectId => $subjectItems) {
+                $firstData = $subjectItems->first();
+                $item = $firstData['item'];
+                $combinedContent = $subjectItems->pluck('item.content')->unique()->implode("\n");
+
+                $message .= "• {$item->subject->name}";
+                
+                if ($firstData['due_date']) {
+                    $dueDateStr = $firstData['due_date']->format('d/m/Y');
+                    $message .= " (Hạn: {$dueDateStr})";
                 }
-            } else {
-                $message .= "📝 Chưa có bài tập\n\n";
+                
+                $message .= "\n";
+                $message .= "  " . str_replace("\n", "\n  ", trim($combinedContent));
+                $message .= "\n\n";
             }
+        } else {
+            $message .= "📝 Chưa có bài tập\n\n";
+        }
             
             // Ghi chú chung (nếu có)
             if (!empty($target['notes'])) {
@@ -621,11 +665,23 @@ class DailyHomeworkController extends Controller
         $weekday = date('N', strtotime($date)); // 1=Monday, 7=Sunday
         
         // Lấy các môn học từ thời khóa biểu cho thứ đó
-        $timetables = Timetable::where('class_id', $class->id)
+        $timetablesRaw = Timetable::where('class_id', $class->id)
             ->where('weekday', $weekday)
             ->with('subject')
             ->orderBy('period')
             ->get();
+
+        // Nhóm theo subject_id để tránh trùng lặp môn học
+        $timetables = $timetablesRaw->groupBy('subject_id')->map(function ($group) {
+            $first = $group->first();
+            return (object) [
+                'subject_id' => $first->subject_id,
+                'subject' => $first->subject,
+                'periods' => $group->pluck('period')->sort()->toArray(),
+                'periods_display' => 'Tiết ' . $group->pluck('period')->sort()->implode(', '),
+                'first_period' => $group->pluck('period')->min()
+            ];
+        })->sortBy('first_period'); // Sắp xếp theo tiết đầu tiên của môn đó
 
         // Kiểm tra nếu không có tiết học nào trong ngày này
         if ($timetables->isEmpty()) {
@@ -773,11 +829,23 @@ class DailyHomeworkController extends Controller
         $weekday = date('N', strtotime($date));
         
         // Lấy các môn học từ thời khóa biểu
-        $timetables = Timetable::where('class_id', $class->id)
+        $timetablesRaw = Timetable::where('class_id', $class->id)
             ->where('weekday', $weekday)
             ->with('subject')
             ->orderBy('period')
             ->get();
+            
+        // Nhóm theo subject_id
+        $timetables = $timetablesRaw->groupBy('subject_id')->map(function ($group) {
+            $first = $group->first();
+            return (object) [
+                'subject_id' => $first->subject_id,
+                'subject' => $first->subject,
+                'periods' => $group->pluck('period')->sort()->toArray(),
+                'periods_display' => 'Tiết ' . $group->pluck('period')->sort()->implode(', '),
+                'first_period' => $group->pluck('period')->min()
+            ];
+        })->sortBy('first_period');
 
         // Lấy bài tập hiện có
         $homework->load('items');
@@ -880,19 +948,19 @@ class DailyHomeworkController extends Controller
             abort(403, 'Bạn không có quyền truy cập lớp này.');
         }
         
-        // Chỉ cho phép xóa nếu là ngày hôm nay
+        // Cho phép xóa nếu là ngày hôm nay hoặc tương lai
         $today = now()->startOfDay();
         $homeworkDate = \Carbon\Carbon::parse($homework->date)->startOfDay();
         
-        if (!$homeworkDate->isSameDay($today)) {
+        if ($homeworkDate->lessThan($today)) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Chỉ có thể xóa bài tập của ngày hôm nay.',
+                    'message' => 'Không thể xóa bài tập trong quá khứ.',
                 ], 403);
             }
             return redirect()->back()
-                ->with('error', 'Chỉ có thể xóa bài tập của ngày hôm nay.');
+                ->with('error', 'Không thể xóa bài tập trong quá khứ.');
         }
         
         // Keep context for redirect after deletion

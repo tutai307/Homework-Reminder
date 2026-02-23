@@ -56,31 +56,30 @@
                 </div>
                 
                 <div class="row g-3 mb-4">
-                    @foreach($timetables as $index => $timetable)
+                    @foreach($timetables as $index => $group)
                         @php
-                            $subject = $timetable->subject;
-                            $period = $timetable->period;
+                            $subject = $group->subject;
                             $existingItem = $existingHomework ? $existingHomework->items->where('subject_id', $subject->id)->first() : null;
                         @endphp
                         <div class="col-md-6 col-lg-4">
-                            <div class="period-box card h-100" data-period="{{ $period }}" data-subject-id="{{ $subject->id }}">
+                            <div class="period-box card h-100" data-subject-id="{{ $subject->id }}">
                                 <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2 period-header" data-bs-toggle="collapse" data-bs-target="#period-{{ $period }}-{{ $subject->id }}" role="button" aria-expanded="false" style="cursor: pointer;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 period-header" data-bs-toggle="collapse" data-bs-target="#subject-{{ $subject->id }}" role="button" aria-expanded="false" style="cursor: pointer;">
                                         <h6 class="mb-0">
-                                            <span class="badge bg-primary me-2">Tiết {{ $period }}</span>
+                                            <span class="badge bg-primary me-2">{{ $group->periods_display }}</span>
                                             <strong>{{ $subject->name }}</strong>
                                         </h6>
                                         <i class="bi bi-chevron-down toggle-icon"></i>
                                     </div>
                                     
-                                    <div class="collapse" id="period-{{ $period }}-{{ $subject->id }}">
+                                    <div class="collapse" id="subject-{{ $subject->id }}">
                                         <div class="mt-3 pt-3 border-top">
                                             <div class="mb-3">
-                                                <label for="homework_{{ $period }}_{{ $subject->id }}_content" class="form-label small">
+                                                <label for="homework_{{ $subject->id }}_content" class="form-label small">
                                                     Nội dung bài tập <span class="text-muted">(để trống nếu không có)</span>
                                                 </label>
                                                 <textarea name="homework[{{ $index }}][content]" 
-                                                          id="homework_{{ $period }}_{{ $subject->id }}_content" 
+                                                          id="homework_{{ $subject->id }}_content" 
                                                           class="form-control @error('homework.'.$index.'.content') is-invalid @enderror" 
                                                           rows="3" 
                                                           placeholder="Nhập nội dung bài tập...">{{ old('homework.'.$index.'.content', $existingItem->content ?? '') }}</textarea>
@@ -88,14 +87,14 @@
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
-
+                                            
                                             <div class="mb-3">
-                                                <label for="homework_{{ $period }}_{{ $subject->id }}_due_date" class="form-label small">
+                                                <label for="homework_{{ $subject->id }}_due_date" class="form-label small">
                                                     Hạn nộp (tùy chọn)
                                                 </label>
                                                 <input type="text" 
                                                        name="homework[{{ $index }}][due_date]" 
-                                                       id="homework_{{ $period }}_{{ $subject->id }}_due_date" 
+                                                       id="homework_{{ $subject->id }}_due_date" 
                                                        class="form-control datepicker @error('homework.'.$index.'.due_date') is-invalid @enderror" 
                                                        value="{{ old('homework.'.$index.'.due_date', $existingItem ? ($existingItem->due_date ? $existingItem->due_date->format('Y-m-d') : '') : '') }}"
                                                        placeholder="Chọn ngày hạn nộp">
@@ -284,19 +283,23 @@
         };
 
         const aliasMap = {
-            'Công nghệ': ['cn', 'c.nghệ'],
-            'Âm nhạc': ['nhạc'],
-            'Tiếng Anh': ['av', 'anh', 't.anh'],
-            'Lịch sử': ['sử'],
-            'Địa lý': ['địa'],
-            'Hóa học': ['hóa', 'hoá'],
-            'Vật lý': ['lý'],
-            'Sinh học': ['sinh'],
-            'Giáo dục công dân': ['gdcd'],
-            'Tin học': ['tin'],
-            'Thể dục': ['td', 't.dục'],
+            'Toán': ['toán học', 't'],
+            'Toán học': ['toán', 't'],
+            'Ngữ văn': ['văn', 'tiếng việt', 'nv'],
+            'Tiếng Anh': ['av', 'anh', 't.anh', 'english', 'nn1', 'ngoại ngữ'],
+            'Khoa học tự nhiên': ['khtn', 'tự nhiên', 'lý-hóa-sinh', 'lý hóa sinh', 'lý', 'hóa', 'sinh'],
+            'Lịch sử và Địa lý': ['ls-đl', 'sử-địa', 'sử địa', 'sử', 'địa', 'lsđl'],
+            'Giáo dục công dân': ['gdcd', 'công dân', 'đạo đức'],
+            'Tin học': ['tin', 'th'],
+            'Công nghệ': ['cn', 'kỹ thuật'],
+            'Giáo dục thể chất': ['gdtc', 'thể dục', 'td'],
+            'Nghệ thuật': ['âm nhạc', 'mĩ thuật', 'vẽ', 'nhạc', 'nt', 'mỹ thuật'],
+            'Âm nhạc': ['nhạc', 'an'],
+            'Mĩ thuật': ['vẽ', 'mt', 'mỹ thuật'],
+            'Hoạt động trải nghiệm, hướng nghiệp': ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'tnhn'],
+            'Hoạt động trải nghiệm': ['hđtn', 'trải nghiệm', 'tnhn'],
             'Giáo dục địa phương': ['gdđp', 'địa phương'],
-            'Trải nghiệm hướng nghiệp': ['tnp', 'trải nghiệm'],
+            'Ngoại ngữ 2': ['nn2', 'tiếng nhật', 'tiếng trung', 'tiếng pháp', 'tiếng hàn'],
         };
 
         btnStartParse.addEventListener('click', function() {

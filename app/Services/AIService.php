@@ -17,6 +17,7 @@ class AIService
     {
         $subjectsList = implode(', ', $subjects);
         
+        $now = \Carbon\Carbon::now()->format('Y-m-d');
         $prompt = "Bạn là một trợ lý giáo vụ chuyên nghiệp. Nhiệm vụ của bạn là trích xuất thông tin bài tập từ văn bản tiếng Việt.
 Danh sách các môn học hợp lệ: [{$subjectsList}].
 
@@ -27,8 +28,13 @@ Quy tắc trích xuất:
 2. Với mỗi môn học tìm thấy, hãy tách rõ:
    - 'subject': Tên môn học (PHẢI TRÙNG KHỚP HOÀN TOÀN với tên trong danh sách hợp lệ).
    - 'content': Nội dung yêu cầu bài tập (ví dụ: 'làm bài 1,2 trang 45'). KHÔNG bao gồm thông tin về hạn nộp trong này.
-   - 'due_date': Hạn nộp bài tập. Nếu người dùng ghi 'hạn 2/3' và năm hiện tại là 2026, hãy chuyển thành '2026-03-02'. Nếu ghi 'hạn tuần sau', hãy tự tính toán dựa trên ngày hiện tại là {{ \Carbon\Carbon::now()->format('Y-m-d') }}. Định dạng bắt buộc: YYYY-MM-DD. Nếu không có hạn nộp, để null.
-3. Kết quả trả về là màng JSON các đối tượng.
+   - 'due_date': Hạn nộp bài tập. Định dạng bắt buộc: YYYY-MM-DD. 
+     - Ngày hiện tại (Today) là: {$now}.
+     - Quy tắc quan trọng: 'due_date' PHẢI từ ngày hiện tại ({$now}) trở về sau. Tuyệt đối không trích xuất ngày trong quá khứ.
+     - Nếu người dùng ghi 'hạn 2/3' và năm hiện tại là 2026, hãy chuyển thành '2026-03-02'. 
+     - Nếu ghi 'hạn tuần sau', hãy tự tính toán dựa trên ngày hiện tại là {$now}. 
+     - Nếu không có hạn nộp hoặc hạn nộp là ngày quá khứ, hãy để null.
+3. Kết quả trả về là mảng JSON các đối tượng.
 4. Nếu không có bài tập nào cho các môn hợp lệ, trả về mảng rỗng [].
 5. Chỉ trả về JSON thuần túy, không giải thích.
 

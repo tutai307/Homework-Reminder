@@ -102,7 +102,11 @@
 
                     @if($homework->items->count() > 0)
                         <div class="homework-list" id="homework-items-list">
-                            @foreach($homework->items as $item)
+                            @foreach($homework->items->groupBy('subject_id') as $subjectId => $items)
+                                @php 
+                                    $item = $items->first();
+                                    $combinedContent = $items->pluck('content')->unique()->implode("\n");
+                                @endphp
                                 <div class="homework-card-wrapper mb-4">
                                     <div class="card border-0 shadow-sm premium-homework-card hover-translate transition">
                                         <div class="card-body p-4">
@@ -122,7 +126,7 @@
                                                         @endif
                                                     </div>
                                                     <div class="homework-full-content text-muted lh-base">
-                                                        {!! nl2br(e($item->content)) !!}
+                                                        {!! nl2br(e($combinedContent)) !!}
                                                     </div>
                                                 </div>
                                             </div>
@@ -279,6 +283,31 @@
 @endpush
 
 @push('scripts')
+<div class="modal fade" id="previewHomeworkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-eye me-2"></i>Xem trước bài tập 
+                    <span id="preview-modal-date" class="badge bg-white text-primary ms-2"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="preview-modal-content" class="row g-3">
+                    <!-- Cards will be rendered here -->
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top-0 py-3">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success rounded-pill px-4" id="preview-copy-zalo-btn">
+                    <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function loadHomework(date) {
         // Thêm trạng thái loading
@@ -313,6 +342,9 @@
             createBtn.href = `{{ route('teacher.daily-homework.create') }}?date=${date}&class_id={{ $class->id }}`;
         }
 
+        const today = new Date().toISOString().split('T')[0];
+        const isFuture = date > today;
+
         // Load homework via AJAX
         const fetchUrl = `{{ route('teacher.daily-homework.get') }}?class_id={{ $class->id }}&date=${date}`;
 
@@ -328,23 +360,31 @@
             .then(data => {
                 contentDiv.classList.remove('loading');
                 
-                if (data.success && data.homework) {
-                    // Ẩn nút tạo mới nếu đã có bài tập
-                    if (createBtn) createBtn.style.display = 'none';
-
-                    let html = '';
-                    
-                    // Top Actions (Luôn hiển thị nút Copy Zalo)
-                    const actionTop = document.getElementById('homework-actions-top');
-                    if (actionTop) {
+                // Top Actions handler
+                const actionTop = document.getElementById('homework-actions-top');
+                if (actionTop) {
+                    if (isFuture) {
+                        actionTop.innerHTML = `
+                            <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="showPreviewModal('${date}')">
+                                <i class="bi bi-eye me-2"></i>Xem trước bài tập
+                            </button>
+                        `;
+                    } else {
                         actionTop.innerHTML = `
                             <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('${date}')">
                                 <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
                             </button>
                         `;
                     }
+                }
 
-                    if (data.homework.notes) {
+                if (data.success && (data.homework || (data.items && data.items.length > 0))) {
+                    // Chỉ ẩn nút tạo mới nếu đã có bản ghi bài tập được giao cho ngày này
+                    if (createBtn) createBtn.style.display = data.homework ? 'none' : 'inline-block';
+
+                    let html = '';
+                    
+                    if (data.homework && data.homework.notes) {
                         html += `
                             <div class="alert alert-info border-0 shadow-sm bg-info bg-opacity-10 mb-4 py-3">
                                 <div class="d-flex align-items-center">
@@ -375,11 +415,14 @@
                                                 <div class="col">
                                                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
                                                         <h5 class="mb-0 fw-bold text-dark me-3">${item.subject_name}</h5>
-                                                        ${item.due_date ? `
-                                                            <span class="badge bg-warning-soft text-warning fw-bold px-3 py-2 rounded-pill">
-                                                                <i class="bi bi-calendar-event me-2"></i>Hạn nộp: ${item.due_date}
-                                                            </span>
-                                                        ` : ''}
+                                                        <div>
+                                                            ${item.is_due_today ? `<span class="badge bg-danger small rounded-pill px-2 me-1">Đến hạn nộp</span>` : ''}
+                                                            ${item.due_date && !item.is_due_today ? `
+                                                                <span class="badge bg-warning-soft text-warning fw-bold px-3 py-2 rounded-pill">
+                                                                    <i class="bi bi-calendar-event me-2"></i>Hạn nộp: ${item.due_date}
+                                                                </span>
+                                                            ` : ''}
+                                                        </div>
                                                     </div>
                                                     <div class="homework-full-content text-muted lh-base">
                                                         ${item.content.replace(/\n/g, '<br>')}
@@ -394,21 +437,30 @@
                         html += '</div>';
 
                         // Bottom Actions
-                        const today = new Date().toISOString().split('T')[0];
                         const isPast = date < today;
                         
-                        html += `
-                            <div class="mt-5 pt-4 border-top d-flex gap-3 justify-content-center">
-                                ${!isPast ? `
-                                    <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary px-4 rounded-pill">
-                                        <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
+                        if (data.homework) {
+                            html += `
+                                <div class="mt-5 pt-4 border-top d-flex gap-3 justify-content-center">
+                                    ${!isPast ? `
+                                        <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary px-4 rounded-pill">
+                                            <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
+                                        </a>
+                                        <button type="button" class="btn btn-danger px-4 rounded-pill" onclick="deleteHomework(${data.homework.id})">
+                                            <i class="bi bi-trash me-2"></i>Xóa bài tập
+                                        </button>
+                                    ` : '<span class="text-muted small italic">Không thể chỉnh sửa hoặc xóa bài tập trong quá khứ</span>'}
+                                </div>
+                            `;
+                        } else if (!isPast) {
+                            html += `
+                                <div class="mt-5 pt-4 border-top text-center">
+                                    <a href="/teacher/daily-homework/create?date=${date}&class_id={{ $class->id }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                        <i class="bi bi-plus-lg me-2"></i>Giao thêm bài tập mới
                                     </a>
-                                ` : ''}
-                                <button type="button" class="btn btn-danger px-4 rounded-pill" onclick="deleteHomework(${data.homework.id})">
-                                    <i class="bi bi-trash me-2"></i>Xóa bài tập
-                                </button>
-                            </div>
-                        `;
+                                </div>
+                            `;
+                        }
                     } else {
                         html = `
                             <div class="text-center py-5">
@@ -423,21 +475,11 @@
                     
                     contentDiv.innerHTML = html;
                 } else {
-                    // Hiện nút tạo mới nếu chưa có bài tập
+                    // Hiện nút tạo mới ở Header nếu chưa có bài tập
                     if (createBtn) createBtn.style.display = 'inline-block';
 
-                    // Top Actions (Luôn hiển thị nút Copy Zalo ngay cả khi không có bài tập)
-                    const actionTop = document.getElementById('homework-actions-top');
-                    if (actionTop) {
-                        actionTop.innerHTML = `
-                            <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('${date}')">
-                                <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
-                            </button>
-                        `;
-                    }
-
                     contentDiv.innerHTML = `
-                        <div class="text-center py-5">
+                         <div class="text-center py-5">
                             <i class="bi bi-calendar2-x display-4 text-muted opacity-25 mb-3"></i>
                             <h6 class="fw-bold text-muted">Chưa có bài tập cho ngày này</h6>
                             <a href="/teacher/daily-homework/create?date=${date}&class_id={{ $class->id }}" class="btn btn-primary btn-sm px-4 rounded-pill mt-2">
@@ -455,6 +497,58 @@
                     title: 'Lỗi!',
                     text: 'Không thể tải bài tập. Vui lòng thử lại.',
                 });
+            });
+    }
+
+    function showPreviewModal(date) {
+        const modal = new bootstrap.Modal(document.getElementById('previewHomeworkModal'));
+        const contentDiv = document.getElementById('preview-modal-content');
+        const dateSpan = document.getElementById('preview-modal-date');
+        const copyBtn = document.getElementById('preview-copy-zalo-btn');
+
+        // Loading state
+        dateSpan.textContent = date.split('-').reverse().join('/');
+        contentDiv.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Đang tải dữ liệu...</p></div>';
+        copyBtn.onclick = () => showZaloModal(date);
+
+        modal.show();
+
+        // Fetch current day's homework items for preview
+        const fetchUrl = `{{ route('teacher.daily-homework.get') }}?class_id={{ $class->id }}&date=${date}`;
+        
+        fetch(fetchUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.preview_items && data.preview_items.length > 0) {
+                    let html = '';
+                    data.preview_items.forEach(item => {
+                        html += `
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm h-100 rounded-4">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h6 class="fw-bold text-primary mb-0">${item.subject_name}</h6>
+                                            <div>
+                                                ${item.is_due_today ? `<span class="badge bg-danger small rounded-pill px-2 me-1">Đến hạn nộp</span>` : ''}
+                                                ${item.due_date && !item.is_due_today ? `<span class="badge bg-warning-soft text-warning small rounded-pill px-2">Hạn: ${item.due_date}</span>` : ''}
+                                            </div>
+                                        </div>
+                                        <div class="text-muted small lh-base">
+                                            ${item.content.replace(/\n/g, '<br>')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    contentDiv.innerHTML = html;
+                } else {
+                    contentDiv.innerHTML = '<div class="col-12 text-center py-5"><i class="bi bi-folder2-open display-4 text-muted opacity-25"></i><p class="mt-3 text-muted">Ngày này chưa có bài tập nào được giao.</p></div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                contentDiv.innerHTML = '<div class="col-12 text-center py-5 text-danger"><i class="bi bi-exclamation-triangle display-4 opacity-25"></i><p class="mt-3">Có lỗi xảy ra khi tải dữ liệu.</p></div>';
             });
     }
 

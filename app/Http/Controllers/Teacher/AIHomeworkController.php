@@ -51,9 +51,18 @@ class AIHomeworkController extends Controller
         $text = $request->text;
         $normalizedText = $this->normalizeVietnamese($text);
 
-        // 2. Kiểm tra quyền truy cập lớp
+        // 2. Kiểm tra quyền truy cập lớp và chặn giao bài tập quá khứ
         if (!$user->hasAccessToClass($classId)) {
             return response()->json(['success' => false, 'message' => 'Bạn không có quyền truy cập lớp này.'], 403);
+        }
+
+        $today = Carbon::now()->startOfDay();
+        $selectedDate = Carbon::parse($date)->startOfDay();
+        if ($selectedDate->lessThan($today)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể sử dụng AI để giao bài tập cho ngày trong quá khứ.'
+            ], 422);
         }
 
         // 3. Lấy danh sách môn học từ timetable của ngày được chọn
@@ -77,21 +86,23 @@ class AIHomeworkController extends Controller
         // 4. Kiểm tra xem text có chứa ít nhất một môn học hợp lệ không (Smart Validate)
         // Mở rộng thêm các từ khóa viết tắt phổ biến để không chặn nhầm AI
         $aliasMap = [
-            'Công nghệ' => ['cn', 'c.nghệ'],
-            'Âm nhạc' => ['nhạc'],
-            'Tiếng Anh' => ['av', 'anh', 't.anh'],
-            'Lịch sử' => ['sử'],
-            'Địa lý' => ['địa'],
-            'Toán học' => ['toán'],
-            'Ngữ văn' => ['văn'],
-            'Hóa học' => ['hóa', 'hoá'],
-            'Vật lý' => ['lý'],
-            'Sinh học' => ['sinh'],
-            'Giáo dục công dân' => ['gdcd'],
-            'Tin học' => ['tin'],
-            'Thể dục' => ['td', 't.dục'],
+            'Toán' => ['toán học', 't'],
+            'Toán học' => ['toán', 't'],
+            'Ngữ văn' => ['văn', 'tiếng việt', 'nv'],
+            'Tiếng Anh' => ['av', 'anh', 't.anh', 'english', 'nn1', 'ngoại ngữ'],
+            'Khoa học tự nhiên' => ['khtn', 'tự nhiên', 'lý-hóa-sinh', 'lý hóa sinh', 'lý', 'hóa', 'sinh'],
+            'Lịch sử và Địa lý' => ['ls-đl', 'sử-địa', 'sử địa', 'sử', 'địa', 'lsđl'],
+            'Giáo dục công dân' => ['gdcd', 'công dân', 'đạo đức'],
+            'Tin học' => ['tin', 'th'],
+            'Công nghệ' => ['cn', 'kỹ thuật'],
+            'Giáo dục thể chất' => ['gdtc', 'thể dục', 'td'],
+            'Nghệ thuật' => ['âm nhạc', 'mĩ thuật', 'vẽ', 'nhạc', 'nt', 'mỹ thuật'],
+            'Âm nhạc' => ['nhạc', 'an'],
+            'Mĩ thuật' => ['vẽ', 'mt', 'mỹ thuật'],
+            'Hoạt động trải nghiệm, hướng nghiệp' => ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'tnhn'],
+            'Hoạt động trải nghiệm' => ['hđtn', 'trải nghiệm', 'tnhn'],
             'Giáo dục địa phương' => ['gdđp', 'địa phương'],
-            'Trải nghiệm hướng nghiệp' => ['tnp', 'trải nghiệm'],
+            'Ngoại ngữ 2' => ['nn2', 'tiếng nhật', 'tiếng trung', 'tiếng pháp', 'tiếng hàn'],
         ];
 
         $foundSubject = false;
@@ -141,11 +152,25 @@ class AIHomeworkController extends Controller
                 }
 
                 if ($matchedSubject) {
+                    $dueDate = $item['due_date'] ?? null;
+                    
+                    // Logic: Hạn nộp phải ít nhất là ngày hôm nay
+                    if ($dueDate) {
+                        try {
+                            $parsedDue = Carbon::parse($dueDate)->startOfDay();
+                            if ($parsedDue->lessThan($today)) {
+                                $dueDate = null; // Hoặc có thể set là $date (ngày giao)
+                            }
+                        } catch (\Exception $e) {
+                            $dueDate = null;
+                        }
+                    }
+
                     $validatedResults[] = [
                         'subject_id' => $matchedSubject->subject_id,
                         'subject_name' => $matchedSubject->subject_name ?? $matchedSubject->subject->name,
                         'content' => $item['content'] ?? '',
-                        'due_date' => $item['due_date'] ?? null,
+                        'due_date' => $dueDate,
                     ];
                 }
             }

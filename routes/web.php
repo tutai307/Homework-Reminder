@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 // Public share page for parents/students (timetable + upcoming homework by due_date)
 Route::get('p/{code}', [\App\Http\Controllers\Public\ClassPortalController::class, 'show'])

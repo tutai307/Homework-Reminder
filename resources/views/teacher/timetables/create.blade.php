@@ -50,7 +50,7 @@
                                             $oldValue = old("timetable.$weekday.$period", $timetables[$weekday][$period] ?? '');
                                         @endphp
                                         <select name="timetable[{{ $weekday }}][{{ $period }}]" 
-                                                class="form-select select2" data-placeholder="Chọn môn...">
+                                                class="form-select select2" data-placeholder="">
                                             <option value=""></option>
                                             @foreach($subjects as $subject)
                                                 <option value="{{ $subject->id }}"

@@ -270,8 +270,15 @@
                         theme: 'bootstrap-5',
                         language: 'vi',
                         width: '100%',
-                        placeholder: $(this).data('placeholder') || 'Chọn một tùy chọn',
+                        placeholder: $(this).attr('data-placeholder') !== undefined ? $(this).data('placeholder') : 'Chọn một tùy chọn',
                         allowClear: true
+                    }).on('select2:unselecting', function() {
+                        $(this).data('unselecting', true);
+                    }).on('select2:opening', function(e) {
+                        if ($(this).data('unselecting')) {
+                            $(this).removeData('unselecting');
+                            e.preventDefault();
+                        }
                     });
                 });
             };

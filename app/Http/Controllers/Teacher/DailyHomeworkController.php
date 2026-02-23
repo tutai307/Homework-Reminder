@@ -219,14 +219,19 @@ class DailyHomeworkController extends Controller
         $selectedDate = \Carbon\Carbon::parse($request->date);
         $includeDayAfterNext = $request->boolean('include_day_after_next', false);
         
-        // Ngày hiện tại (được chọn), hôm sau và hôm sau nữa
-        $nextDate = $selectedDate->copy()->addDay();
+        // Nếu chọn ngày hôm nay -> lấy bài tập cho ngày mai
+        // Nếu chọn ngày khác (trong tương lai/quá khứ) -> lấy bài tập cho chính ngày đó
+        if ($selectedDate->isToday()) {
+            $nextDate = $selectedDate->copy()->addDay();
+        } else {
+            $nextDate = $selectedDate->copy();
+        }
         $nextDateStr = $nextDate->format('Y-m-d');
         
         $dayAfterNextDate = null;
         $dayAfterNextDateStr = null;
         if ($includeDayAfterNext) {
-            $dayAfterNextDate = $selectedDate->copy()->addDays(2);
+            $dayAfterNextDate = $nextDate->copy()->addDay();
             $dayAfterNextDateStr = $dayAfterNextDate->format('Y-m-d');
         }
         
@@ -300,6 +305,24 @@ class DailyHomeworkController extends Controller
             $timetables[$weekday][$subjectId]->push($timetable);
         }
 
+        // Lấy danh sách ID các môn học của ngày mai để nhắc làm sớm
+        $nextDayWeekday = $nextDate->dayOfWeek == 0 ? 7 : $nextDate->dayOfWeek;
+        $nextDaySubjectIds = Timetable::where('class_id', $classId)
+            ->where('weekday', $nextDayWeekday)
+            ->pluck('subject_id')
+            ->unique()
+            ->toArray();
+
+        // Lấy các bài tập của các môn ngày mai nhưng hạn nộp sau ngày mai
+        $earlyRemindItems = \App\Models\HomeworkItem::whereHas('homework', function($query) use ($classId) {
+                $query->where('class_id', $classId);
+            })
+            ->whereIn('subject_id', $nextDaySubjectIds)
+            ->where('due_date', '>', $nextDateStr)
+            ->with(['subject', 'homework'])
+            ->get()
+            ->unique('id');
+
         // Format tin nhắn (kèm ghi chú chung nếu có)
         $message = $this->formatZaloMessageForUpcoming(
             $nextDayItems,
@@ -311,7 +334,8 @@ class DailyHomeworkController extends Controller
             $homeworkSelected?->notes,
             $homeworkTomorrow?->notes,
             $homeworkDayAfter?->notes,
-            $selectedDate
+            $selectedDate,
+            $earlyRemindItems
         );
 
         return response()->json([
@@ -334,7 +358,8 @@ class DailyHomeworkController extends Controller
         $notesSelected = null,
         $notesTomorrow = null,
         $notesDayAfter = null,
-        $selectedDate = null
+        $selectedDate = null,
+        $earlyRemindItems = null
     )
     {
         $today = now();
@@ -404,8 +429,30 @@ class DailyHomeworkController extends Controller
         // Nhóm theo ngày
         $groupedByDate = $sortedItems->groupBy('date_label');
         
-        // Hiển thị bài tập theo từng ngày
-        foreach ($groupedByDate as $dateLabel => $items) {
+        // Xác định các ngày cần hiển thị tiêu đề (Luôn hiện tiêu đề ngày được chọn)
+        $targetDates = [
+            [
+                'label' => $nextFormattedDate . ' (' . $nextDayNameVi . ')',
+                'notes' => $notesTomorrow
+            ]
+        ];
+        if ($dayAfterNextDate) {
+            $targetDates[] = [
+                'label' => $dayAfterNextFormattedDate . ' (' . $dayAfterNextDayNameVi . ')',
+                'notes' => $dayAfterNextFormattedDate . ' (' . $dayAfterNextDayNameVi . ')' === $nextFormattedDate . ' (' . $nextDayNameVi . ')' ? null : $notesDayAfter
+            ];
+        }
+
+        // Hiển thị bài tập theo từng ngày mục tiêu
+        foreach ($targetDates as $target) {
+            $dateLabel = $target['label'];
+            $items = $groupedByDate->get($dateLabel, collect());
+            
+            // Skip nếu ngày sau trùng ngày trước (tránh lặp tiêu đề)
+            if ($dayAfterNextDate && $target === $targetDates[1] && $targetDates[1]['label'] === $targetDates[0]['label']) {
+                continue;
+            }
+
             $message .= "📅 {$dateLabel}:\n";
             $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
             
@@ -414,7 +461,6 @@ class DailyHomeworkController extends Controller
                     $item = $data['item'];
                     $message .= "• {$item->subject->name}";
                     
-                    // Hiển thị deadline nếu có
                     if ($data['due_date']) {
                         $dueDateStr = $data['due_date']->format('d/m/Y');
                         $message .= " (Hạn: {$dueDateStr})";
@@ -426,24 +472,34 @@ class DailyHomeworkController extends Controller
             } else {
                 $message .= "📝 Chưa có bài tập\n\n";
             }
+            
             // Ghi chú chung (nếu có)
-            if ($dateLabel === $nextFormattedDate . ' (' . $nextDayNameVi . ')' && !empty($notesTomorrow)) {
-                $message .= "🗒️ Lời nhắc của GVCN / lớp trưởng:\n{$notesTomorrow}\n\n";
-            }
-            if ($dayAfterNextDate && $dateLabel === $dayAfterNextFormattedDate . ' (' . $dayAfterNextDayNameVi . ')' && !empty($notesDayAfter)) {
-                $message .= "🗒️ Lời nhắc của GVCN / lớp trưởng:\n{$notesDayAfter}\n\n";
+            if (!empty($target['notes'])) {
+                $message .= "🗒️ Lời nhắc của GVCN / lớp trưởng:\n{$target['notes']}\n\n";
             }
         }
+
         
-        // Nếu không có bài tập nào
-        if ($sortedItems->count() == 0) {
-            $message .= "📝 Chưa có bài tập cần làm trong 2 ngày tới.\n\n";
-        }
+        // // Nếu không có bài tập nào
+        // if ($sortedItems->count() == 0) {
+        //     $message .= "📝 Chưa có bài tập cần làm trong 2 ngày tới.\n\n";
+        // }
 
         // Append public portal link so parents/students can follow on the website
         if (!empty($portalUrl)) {
             $message .= "\n🔗 Xem thời khoá biểu & bài tập trên web:\n";
             $message .= "{$portalUrl}\n";
+        }
+
+        // Hiển thị phần nhắc nhở làm sớm
+        if ($earlyRemindItems && $earlyRemindItems->count() > 0) {
+            $message .= "\n━━━━━━━━━━━━━━━━━━━━\n";
+            $message .= "💡 BÀI TẬP CỦA CÁC MÔN NGÀY MAI (NÊN LÀM SỚM):\n";
+            foreach ($earlyRemindItems as $item) {
+                $dueDateStr = $item->due_date ? $item->due_date->format('d/m/Y') : 'Không hạn';
+                $message .= "• {$item->subject->name} (Hạn: {$dueDateStr})\n";
+                $message .= "  {$item->content}\n\n";
+            }
         }
         
         return trim($message);

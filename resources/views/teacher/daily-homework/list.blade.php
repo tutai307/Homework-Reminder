@@ -79,11 +79,9 @@
                         <p class="text-muted mb-0 small" id="selected-date-display">{{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}</p>
                     </div>
                     <div class="d-flex gap-2" id="homework-actions-top">
-                        @if($homework)
-                            <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('{{ $selectedDate }}')">
-                                <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
-                            </button>
-                        @endif
+                        <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('{{ $selectedDate }}')">
+                            <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
+                        </button>
                     </div>
                 </div>
             </div>
@@ -336,7 +334,7 @@
 
                     let html = '';
                     
-                    // Top Actions
+                    // Top Actions (Luôn hiển thị nút Copy Zalo)
                     const actionTop = document.getElementById('homework-actions-top');
                     if (actionTop) {
                         actionTop.innerHTML = `
@@ -428,9 +426,15 @@
                     // Hiện nút tạo mới nếu chưa có bài tập
                     if (createBtn) createBtn.style.display = 'inline-block';
 
-                    // Xóa actions top nếu không có bài tập
+                    // Top Actions (Luôn hiển thị nút Copy Zalo ngay cả khi không có bài tập)
                     const actionTop = document.getElementById('homework-actions-top');
-                    if (actionTop) actionTop.innerHTML = '';
+                    if (actionTop) {
+                        actionTop.innerHTML = `
+                            <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="showZaloModal('${date}')">
+                                <i class="bi bi-clipboard-check me-2"></i>Copy Zalo
+                            </button>
+                        `;
+                    }
 
                     contentDiv.innerHTML = `
                         <div class="text-center py-5">

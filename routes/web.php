@@ -54,4 +54,6 @@ Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function (
     Route::get('class-monitor/create', [\App\Http\Controllers\Teacher\ClassMonitorController::class, 'create'])->name('class-monitor.create');
     Route::post('class-monitor', [\App\Http\Controllers\Teacher\ClassMonitorController::class, 'store'])->name('class-monitor.store');
     Route::delete('class-monitor/{classMonitor}', [\App\Http\Controllers\Teacher\ClassMonitorController::class, 'destroy'])->name('class-monitor.destroy');
+
+    Route::post('ai-homework/parse', [\App\Http\Controllers\Teacher\AIHomeworkController::class, 'parse'])->name('ai-homework.parse');
 });

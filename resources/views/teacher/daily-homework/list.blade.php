@@ -222,6 +222,7 @@
     
     .bg-primary-soft { background-color: rgba(13, 110, 253, 0.1); }
     .bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); }
+    .bg-info-soft { background-color: rgba(13, 202, 240, 0.1); }
     .x-small { font-size: 0.75rem; }
     
     /* Homework List Styles */
@@ -553,18 +554,25 @@
     }
 
     function showZaloModal(date) {
-        // Hiển thị modal với checkbox để chọn có lấy bài tập hôm sau nữa không
+        // Hiển thị modal với checkbox để chọn các tùy chọn
         Swal.fire({
             title: 'Copy tin nhắn Zalo',
             html: `
                 <div class="text-start">
-                    <div class="form-check mb-3">
+                    <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" id="includeDayAfterNext" checked>
                         <label class="form-check-label" for="includeDayAfterNext">
                             Lấy thêm bài tập ngày hôm sau nữa
                         </label>
                     </div>
-                    <p class="text-muted small">Tin nhắn sẽ bao gồm bài tập ngày hôm sau và (nếu chọn) ngày hôm sau nữa</p>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="withAiPlan">
+                        <label class="form-check-label" for="withAiPlan">
+                            <span class="badge bg-info-soft text-info me-1"><i class="bi bi-robot"></i> AI</span> 
+                            Lấy thêm kế hoạch học tập từ AI
+                        </label>
+                    </div>
+                    <p class="text-muted small">Tin nhắn sẽ bao gồm bài tập ngày hôm sau và (nếu chọn) các tùy chọn bổ sung phía trên.</p>
                 </div>
             `,
             showCancelButton: true,
@@ -577,23 +585,24 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 const includeDayAfterNext = document.getElementById('includeDayAfterNext').checked;
-                loadZaloMessage(date, includeDayAfterNext);
+                const withAiPlan = document.getElementById('withAiPlan').checked;
+                loadZaloMessage(date, includeDayAfterNext, withAiPlan);
             }
         });
     }
 
-    function loadZaloMessage(date, includeDayAfterNext) {
+    function loadZaloMessage(date, includeDayAfterNext, withAiPlan) {
         // Hiển thị loading
         Swal.fire({
-            title: 'Đang tải tin nhắn...',
-            html: 'Vui lòng đợi trong giây lát',
+            title: 'Đang chuẩn bị tin nhắn...',
+            html: withAiPlan ? 'AI đang phân tích và lập kế hoạch (có thể mất 5-10s)...' : 'Vui lòng đợi trong giây lát',
             allowOutsideClick: false,
             didOpen: () => {
                 Swal.showLoading();
             }
         });
         
-        const url = `{{ route('teacher.daily-homework.zalo-message') }}?class_id={{ $class->id }}&date=${date}&include_day_after_next=${includeDayAfterNext ? 1 : 0}`;
+        const url = `{{ route('teacher.daily-homework.zalo-message') }}?class_id={{ $class->id }}&date=${date}&include_day_after_next=${includeDayAfterNext ? 1 : 0}&with_ai_plan=${withAiPlan ? 1 : 0}`;
 
         fetch(url)
             .then(response => {

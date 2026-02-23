@@ -137,30 +137,28 @@ Văn bản đầu vào: \"{$text}\"";
             $itemsList .= ($index + 1) . ". Môn: {$item['subject']} - Bài tập: {$item['content']} (Hạn nộp: {$dueDate})\n";
         }
 
-        $prompt = "Bạn là một chuyên gia tư vấn giáo dục thông minh. Nhiệm vụ của bạn là lập một KẾ HOẠCH HỌC TẬP TỐI ƯU cho học sinh dựa trên danh sách bài tập sau:
+        $prompt = "Bạn là một chuyên gia tư vấn giáo dục thông minh. Nhiệm vụ của bạn là phân tích lượng bài tập và lập một KẾ HOẠCH HỌC TẬP TỐI ƯU cho học sinh dựa trên danh sách bài tập sau:
 
 {$itemsList}
 
-Ngày hôm nay là: {$targetDate}.
+Ngày thực hiện kế hoạch: {$targetDate}.
 
-Yêu cầu phân tích và lập kế hoạch:
-1. Thứ tự ưu tiên: 
-   - Ưu tiên các bài có deadline gần nhất (ví dụ: mai nộp).
-   - Xen kẽ các môn khó (Toán, KHTN) với các môn học thuộc (Văn, Sử, Địa) để tránh căng thẳng.
-   - Ưu tiên bài tập có khối lượng nhiều làm trước khi còn tỉnh táo.
+Yêu cầu phân tích và lập kế hoạch CHI TIẾT:
+1. Phân tích tổng quan: Đánh giá nhanh lượng bài tập hôm nay và ngày mai.
+2. Chiến thuật làm bài (Trình tự thông minh): 
+   - Đề xuất môn nào làm trước, môn nào làm sau.
+   - Chiến thuật: Bắt đầu bằng một môn dễ/yêu thích để tạo đà (5-10p), sau đó tập trung vào môn khó nhất/hạn nộp gần nhất khi não còn tỉnh táo, cuối cùng là các môn học thuộc nhẹ nhàng.
+3. Ước tính thời gian THỰC TẾ (CỰC KỲ QUAN TRỌNG):
+   - Ước lượng thời gian tối giản và hiệu quả, tránh đưa ra thời gian quá dài không thực tế (VD: Soạn văn chỉ 15-30p, bài tập Toán 30-45p, không để 90-120p cho các bài tập thông thường).
+   - Đưa ra thời gian dự kiến cho từng môn và tổng thời gian tối ưu toàn bộ.
+4. Lời khuyên ngắn (Pomodoro, nghỉ ngơi): Nhắc nhanh việc nghỉ giải lao.
 
-2. Ước tính thời gian:
-   - Ước lượng thời gian thực tế phù hợp với học sinh THCS/THPT (ví dụ: làm 5-10 bài Toán mất 40-50p, soạn bài Văn mất 20p...).
-   - Đưa ra tổng thời gian dự kiến.
-
-3. Quy định định dạng (CỰC KỲ QUAN TRỌNG):
-   - Trả về văn bản THUẦN (Plain Text) để gửi qua Zalo.
-   - KHÔNG sử dụng Markdown (không dùng **, ##, [ ], _, *).
-   - KHÔNG dùng JSON hay ký tự đặc biệt phức tạp.
-   - Mỗi ý một dòng, có dấu gạch đầu dòng (-) hoặc số thứ tự (1, 2, 3).
-   - Viết ngắn gọn, súc tích, ngôn ngữ tự nhiên, khích lệ học sinh.
-
-Nội dung kế hoạch phải bắt đầu ngay bằng các gợi ý hành động cụ thể.";
+QUY ĐỊNH ĐỊNH DẠNG (BẮT BUỘC):
+- Trả về văn bản THUẦN (Plain Text) để copy gửi Zalo.
+- TUYỆT ĐỐI KHÔNG dùng Markdown (không dùng **, ##, [ ], _, *, `).
+- Sử dụng dấu cộng (+) hoặc số thứ tự (1. 2. 3.) cho các ý.
+- Viết cực kỳ ngắn gọn, súc tích, ngôn ngữ tự nhiên, khích lệ.
+- Bắt đầu nội dung ngay không cần chào hỏi.";
 
         try {
             $apiKey = config('openai.api_key');

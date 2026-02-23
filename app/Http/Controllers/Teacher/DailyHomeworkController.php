@@ -256,10 +256,12 @@ class DailyHomeworkController extends Controller
         $request->validate([
             'date' => 'required|date',
             'include_day_after_next' => 'nullable|boolean',
+            'with_ai_plan' => 'nullable|boolean',
         ]);
 
         $selectedDate = \Carbon\Carbon::parse($request->date);
         $includeDayAfterNext = $request->boolean('include_day_after_next', false);
+        $withAiPlan = $request->boolean('with_ai_plan', false);
         
         // Nếu chọn ngày hôm nay -> lấy bài tập cho ngày mai
         // Nếu chọn ngày khác (trong tương lai/quá khứ) -> lấy bài tập cho chính ngày đó
@@ -381,32 +383,34 @@ class DailyHomeworkController extends Controller
         );
 
         // --- BỔ SUNG: AI TẠO KẾ HOẠCH HỌC TẬP THÔNG MINH ---
-        // Thu thập tất cả bài tập cần làm (ngày mai, ngày kia, và nhắc sớm)
-        $homeworkForPlan = collect()
-            ->concat($nextDayItems)
-            ->concat($dayAfterNextItems)
-            ->concat($earlyRemindItems)
-            ->filter(function($item) {
-                return !empty($item->content);
-            })
-            ->unique('id');
+        if ($withAiPlan) {
+            // Thu thập tất cả bài tập cần làm (ngày mai, ngày kia, và nhắc sớm)
+            $homeworkForPlan = collect()
+                ->concat($nextDayItems)
+                ->concat($dayAfterNextItems)
+                ->concat($earlyRemindItems)
+                ->filter(function($item) {
+                    return !empty($item->content);
+                })
+                ->unique('id');
 
-        // Chỉ gọi AI nếu có ít nhất 2 bài tập từ các môn khác nhau (hoặc cùng môn)
-        if ($homeworkForPlan->count() >= 2) {
-            $formattedData = $homeworkForPlan->map(function($item) {
-                return [
-                    'subject' => $item->subject?->name,
-                    'content' => $item->content,
-                    'due_date' => $item->due_date ? $item->due_date->format('d/m/Y') : 'Không hạn',
-                ];
-            })->values()->toArray();
+            // Chỉ gọi AI nếu có ít nhất 2 bài tập từ các môn khác nhau (hoặc cùng môn)
+            if ($homeworkForPlan->count() >= 2) {
+                $formattedData = $homeworkForPlan->map(function($item) {
+                    return [
+                        'subject' => $item->subject?->name,
+                        'content' => $item->content,
+                        'due_date' => $item->due_date ? $item->due_date->format('d/m/Y') : 'Không hạn',
+                    ];
+                })->values()->toArray();
 
-            $studyPlan = $this->aiService->generateStudyPlan($formattedData, $selectedDate->format('d/m/Y'));
-            
-            if (!empty($studyPlan)) {
-                $message .= "\n\n━━━━━━━━━━━━━━━━━━━━\n";
-                $message .= "🧠 Gợi ý kế hoạch học tập:\n\n";
-                $message .= $studyPlan;
+                $studyPlan = $this->aiService->generateStudyPlan($formattedData, $selectedDate->format('d/m/Y'));
+                
+                if (!empty($studyPlan)) {
+                    $message .= "\n\n━━━━━━━━━━━━━━━━━━━━\n";
+                    $message .= "🧠 Gợi ý kế hoạch học tập (AI):\n\n";
+                    $message .= $studyPlan;
+                }
             }
         }
         // --- KẾT THÚC BỔ SUNG ---

@@ -13,21 +13,19 @@ class SubjectSeeder extends Seeder
     public function run(): void
     {
         $subjects = [
-            // Môn học cơ bản
-            ['name' => 'Toán', 'code' => 'TOAN'],
-            ['name' => 'Ngữ văn', 'code' => 'NGUVAN'],
-            ['name' => 'Tiếng Anh', 'code' => 'TA'],
-            ['name' => 'Vật lý', 'code' => 'VATLY'],
-            ['name' => 'Hóa học', 'code' => 'HOAHOC'],
-            ['name' => 'Sinh học', 'code' => 'SINH'],
-            ['name' => 'Lịch sử', 'code' => 'LS'],
-            ['name' => 'Địa lý', 'code' => 'DL'],
+            ['name' => 'Sinh hoạt', 'code' => 'SHL'],
+            ['name' => 'Khoa học tự nhiên', 'code' => 'KHTN'],
+            ['name' => 'Lịch sử và Địa lí', 'code' => 'LSĐL'],
             ['name' => 'Giáo dục công dân', 'code' => 'GDCD'],
             ['name' => 'Công nghệ', 'code' => 'CN'],
             ['name' => 'Tin học', 'code' => 'TIN'],
-            ['name' => 'Thể dục', 'code' => 'TD'],
-            ['name' => 'Mỹ thuật', 'code' => 'MT'],
-            ['name' => 'Âm nhạc', 'code' => 'AM'],
+            ['name' => 'GDTC', 'code' => 'TD'],
+            ['name' => 'Nghệ thuật', 'code' => 'NT'],
+            ['name' => 'Giáo dục ĐP', 'code' => 'GDĐP'],
+            ['name' => 'HĐTN HN', 'code' => 'HDTN'],
+            ['name' => 'Toán', 'code' => 'TOAN'],
+            ['name' => 'Ngữ văn', 'code' => 'NGUVAN'],
+            ['name' => 'Tiếng Anh', 'code' => 'TA'],
         ];
 
         foreach ($subjects as $subject) {

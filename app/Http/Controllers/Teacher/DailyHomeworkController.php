@@ -380,27 +380,32 @@ class DailyHomeworkController extends Controller
             $earlyRemindItems
         );
 
-        // --- BỔ SUNG: AI TẠO KẾ HOẠCH HỌC TẬP ---
-        $allHomeworkItems = collect()
+        // --- BỔ SUNG: AI TẠO KẾ HOẠCH HỌC TẬP THÔNG MINH ---
+        // Thu thập tất cả bài tập cần làm (ngày mai, ngày kia, và nhắc sớm)
+        $homeworkForPlan = collect()
             ->concat($nextDayItems)
             ->concat($dayAfterNextItems)
             ->concat($earlyRemindItems)
-            ->filter();
+            ->filter(function($item) {
+                return !empty($item->content);
+            })
+            ->unique('id');
 
-        if ($allHomeworkItems->count() > 0) {
-            $formattedData = $allHomeworkItems->map(function($item) {
+        // Chỉ gọi AI nếu có ít nhất 2 bài tập từ các môn khác nhau (hoặc cùng môn)
+        if ($homeworkForPlan->count() >= 2) {
+            $formattedData = $homeworkForPlan->map(function($item) {
                 return [
                     'subject' => $item->subject?->name,
                     'content' => $item->content,
-                    'due_date' => $item->due_date ? $item->due_date->format('Y-m-d') : null,
+                    'due_date' => $item->due_date ? $item->due_date->format('d/m/Y') : 'Không hạn',
                 ];
             })->values()->toArray();
 
-            $studyPlan = $this->aiService->generateStudyPlan($formattedData, $selectedDate->format('Y-m-d'));
+            $studyPlan = $this->aiService->generateStudyPlan($formattedData, $selectedDate->format('d/m/Y'));
             
             if (!empty($studyPlan)) {
                 $message .= "\n\n━━━━━━━━━━━━━━━━━━━━\n";
-                $message .= "💡 [GỢI Ý KẾ HOẠCH HỌC TẬP]\n";
+                $message .= "🧠 Gợi ý kế hoạch học tập:\n\n";
                 $message .= $studyPlan;
             }
         }

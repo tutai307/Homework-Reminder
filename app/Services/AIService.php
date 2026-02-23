@@ -117,4 +117,88 @@ Văn bản đầu vào: \"{$text}\"";
             return [];
         }
     }
+
+    /**
+     * Generate a study plan based on homework items.
+     *
+     * @param array $items Array of items with 'subject', 'content', and 'due_date'
+     * @param string $targetDate The date for which the study plan is being generated
+     * @return string
+     */
+    public function generateStudyPlan(array $items, string $targetDate): string
+    {
+        if (count($items) < 2) {
+            return "";
+        }
+
+        $itemsList = "";
+        foreach ($items as $index => $item) {
+            $dueDate = $item['due_date'] ?? 'Không rõ';
+            $itemsList .= ($index + 1) . ". Môn: {$item['subject']} - Bài tập: {$item['content']} (Hạn nộp: {$dueDate})\n";
+        }
+
+        $prompt = "Bạn là một chuyên gia tư vấn giáo dục thông minh. Nhiệm vụ của bạn là lập một KẾ HOẠCH HỌC TẬP TỐI ƯU cho học sinh dựa trên danh sách bài tập sau:
+
+{$itemsList}
+
+Ngày hôm nay là: {$targetDate}.
+
+Yêu cầu phân tích và lập kế hoạch:
+1. Thứ tự ưu tiên: 
+   - Ưu tiên các bài có deadline gần nhất (ví dụ: mai nộp).
+   - Xen kẽ các môn khó (Toán, KHTN) với các môn học thuộc (Văn, Sử, Địa) để tránh căng thẳng.
+   - Ưu tiên bài tập có khối lượng nhiều làm trước khi còn tỉnh táo.
+
+2. Ước tính thời gian:
+   - Ước lượng thời gian thực tế phù hợp với học sinh THCS/THPT (ví dụ: làm 5-10 bài Toán mất 40-50p, soạn bài Văn mất 20p...).
+   - Đưa ra tổng thời gian dự kiến.
+
+3. Quy định định dạng (CỰC KỲ QUAN TRỌNG):
+   - Trả về văn bản THUẦN (Plain Text) để gửi qua Zalo.
+   - KHÔNG sử dụng Markdown (không dùng **, ##, [ ], _, *).
+   - KHÔNG dùng JSON hay ký tự đặc biệt phức tạp.
+   - Mỗi ý một dòng, có dấu gạch đầu dòng (-) hoặc số thứ tự (1, 2, 3).
+   - Viết ngắn gọn, súc tích, ngôn ngữ tự nhiên, khích lệ học sinh.
+
+Nội dung kế hoạch phải bắt đầu ngay bằng các gợi ý hành động cụ thể.";
+
+        try {
+            $apiKey = config('openai.api_key');
+            $baseUrl = 'https://api.openai.com/v1';
+            
+            if ($apiKey && str_starts_with($apiKey, 'sk-or-')) {
+                $baseUrl = 'https://openrouter.ai/api/v1';
+            }
+
+            $client = new \GuzzleHttp\Client([
+                'timeout' => config('openai.request_timeout', 30),
+            ]);
+
+            $response = $client->post($baseUrl . '/chat/completions', [
+                'headers' => [
+                    'Authorization' => "Bearer {$apiKey}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'model' => 'openai/gpt-4o-mini',
+                    'messages' => [
+                        ['role' => 'system', 'content' => 'Bạn là chuyên gia lập kế hoạch học tập. Hãy viết bằng tiếng Việt, thân thiện, súc tích, không dùng định dạng markdown.'],
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                    'temperature' => 0.7,
+                ]
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            $content = $result['choices'][0]['message']['content'] ?? '';
+            
+            // Dọn dẹp sơ bộ nếu AI vô tình trả về markdown
+            $content = str_replace(['**', '##', '###', '_', '*', '`'], '', $content);
+            
+            return trim($content);
+        } catch (\Exception $e) {
+            \Log::error('Generate Study Plan Error: ' . $e->getMessage());
+            return "";
+        }
+    }
 }

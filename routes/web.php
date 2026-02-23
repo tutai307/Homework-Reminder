@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 });
 
 // Public share page for parents/students (timetable + upcoming homework by due_date)

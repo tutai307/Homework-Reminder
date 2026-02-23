@@ -21,15 +21,41 @@ class AIHomeworkController extends Controller
 
     private function normalizeVietnamese($str)
     {
+        if (!$str) return '';
         $str = mb_strtolower($str);
-        // Chuẩn hóa vị trí đặt dấu (kiểu cũ vs kiểu mới)
+        
+        // 1. Xử lý i/y (Chuyển hết về i)
+        $str = preg_replace('/í|ý/u', 'i', $str);
+        $str = preg_replace('/ì|ỳ/u', 'i', $str);
+        $str = preg_replace('/ỉ|ỷ/u', 'i', $str);
+        $str = preg_replace('/ĩ|ỹ/u', 'i', $str);
+        $str = preg_replace('/ị|ỵ/u', 'i', $str);
+        $str = str_replace('y', 'i', $str);
+
+        // 2. Chuẩn hóa vị trí đặt dấu
         $map = [
             'hoá' => 'hóa', 'hoà' => 'hòa', 'hoả' => 'hỏa', 'hoã' => 'hóa', 'hoạ' => 'họa',
             'oá' => 'óa', 'oà' => 'òa', 'oả' => 'ỏa', 'oã' => 'óa', 'oạ' => 'ọa',
-            'uý' => 'úy', 'uỳ' => 'ủy', 'uỷ' => 'ủy', 'uỹ' => 'úy', 'uỵ' => 'ụy',
-            'uế' => 'uế' // Thêm các cặp khác nếu cần
+            'uý' => 'úy', 'uỳ' => 'ủy', 'uỷ' => 'ủy', 'uỹ' => 'úy', 'uỵ' => 'ụy'
         ];
-        return str_replace(array_keys($map), array_values($map), $str);
+        $str = str_replace(array_keys($map), array_values($map), $str);
+
+        // 3. Loại bỏ dấu tiếng Việt hoàn toàn để so sánh "thô"
+        $unicode = [
+            'a' => 'á|à|ả|ã|ạ|ă|ắ|ặ|ằ|ẳ|ẵ|â|ấ|ầ|ẩn|ẫ|ậ',
+            'd' => 'đ',
+            'e' => 'é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ',
+            'i' => 'í|ì|ỉ|ĩ|ị',
+            'o' => 'ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ',
+            'u' => 'ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự',
+            's' => 's',
+            'x' => 'x'
+        ];
+        foreach ($unicode as $nonUnicode => $uni) {
+            $str = preg_replace("/($uni)/i", $nonUnicode, $str);
+        }
+
+        return trim($str);
     }
 
     /**
@@ -81,73 +107,95 @@ class AIHomeworkController extends Controller
             ], 422);
         }
 
-        $validSubjects = $timetables->pluck('subject.name')->unique()->toArray();
+        $validOfficialSubjects = $timetables->pluck('subject.name')->unique()->toArray();
 
-        // 4. Kiểm tra xem text có chứa ít nhất một môn học hợp lệ không (Smart Validate)
-        // Mở rộng thêm các từ khóa viết tắt phổ biến để không chặn nhầm AI
-        $aliasMap = [
-            'Toán' => ['toán học', 't'],
-            'Toán học' => ['toán', 't'],
-            'Ngữ văn' => ['văn', 'tiếng việt', 'nv'],
-            'Tiếng Anh' => ['av', 'anh', 't.anh', 'english', 'nn1', 'ngoại ngữ'],
-            'Khoa học tự nhiên' => ['khtn', 'tự nhiên', 'lý-hóa-sinh', 'lý hóa sinh', 'lý', 'hóa', 'sinh'],
-            'Lịch sử và Địa lý' => ['ls-đl', 'sử-địa', 'sử địa', 'sử', 'địa', 'lsđl'],
-            'Giáo dục công dân' => ['gdcd', 'công dân', 'đạo đức'],
-            'Tin học' => ['tin', 'th'],
-            'Công nghệ' => ['cn', 'kỹ thuật'],
-            'Giáo dục thể chất' => ['gdtc', 'thể dục', 'td'],
-            'Nghệ thuật' => ['âm nhạc', 'mĩ thuật', 'vẽ', 'nhạc', 'nt', 'mỹ thuật'],
-            'Âm nhạc' => ['nhạc', 'an'],
-            'Mĩ thuật' => ['vẽ', 'mt', 'mỹ thuật'],
-            'Hoạt động trải nghiệm, hướng nghiệp' => ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'tnhn'],
-            'Hoạt động trải nghiệm' => ['hđtn', 'trải nghiệm', 'tnhn'],
-            'Giáo dục địa phương' => ['gdđp', 'địa phương'],
-            'Ngoại ngữ 2' => ['nn2', 'tiếng nhật', 'tiếng trung', 'tiếng pháp', 'tiếng hàn'],
+        // 4. Xây dựng DYNAMIC SUBJECT DICTIONARY (Cơ chế alias mở rộng)
+        $globalAliasMap = [
+            'Toan' => ['toán', 't', 'toán học'],
+            'Ngu van' => ['văn', 'nv', 'ngữ văn', 'soạn văn', 'tiếng việt'],
+            'Tieng Anh' => ['anh', 'av', 'english', 't.anh', 'tiếng anh'],
+            'Khoa hoc tu nhien' => ['khtn', 'tự nhiên', 'lý', 'hóa', 'sinh', 'vật lý', 'hóa học', 'sinh học'],
+            'Lich su va Dia li' => ['lsđl', 'sử địa', 'sử', 'địa', 'lịch sử', 'địa lý', 'ls', 'đl'],
+            'Lich su' => ['sử', 'ls', 'lịch sử'],
+            'Dia li' => ['địa', 'đl', 'địa lý'],
+            'Giao duc cong dan' => ['gdcd', 'công dân', 'đạo đức'],
+            'Tin hoc' => ['tin', 'th', 'tin học'],
+            'Cong nghe' => ['cn', 'công nghệ'],
+            'GDTC' => ['gdtc', 'thể dục', 'td', 'tập thể dục', 'gdtc'],
+            'Nghe thuat' => ['vẽ', 'nhạc', 'mỹ thuật', 'âm nhạc', 'mĩ thuật', 'nt'],
+            'Am nhac' => ['nhạc', 'an', 'âm nhạc'],
+            'Mi thuat' => ['vẽ', 'mt', 'mỹ thuật', 'mĩ thuật'],
+            'HDTN HN' => ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'hdtn'],
+            'Giao duc DP' => ['gdđp', 'địa phương', 'gdđp'],
+            'Sinh hoat' => ['shl', 'sinh hoạt', 'sh'],
         ];
 
-        $foundSubject = false;
-        foreach ($validSubjects as $subjectName) {
-            $normalizedSubject = $this->normalizeVietnamese($subjectName);
-            // Kiểm tra tên chính thức
-            if (mb_strpos($normalizedText, $normalizedSubject) !== false) {
-                $foundSubject = true;
-                break;
+        // Bước này cực kỳ quan trọng: Local Pre-parsing
+        $detectedOfficialNames = [];
+
+        foreach ($validOfficialSubjects as $officialName) {
+            $normalizedOfficial = $this->normalizeVietnamese($officialName);
+            
+            // Tìm các alias từ map dựa trên tên đã chuẩn hóa
+            $aliases = [];
+            foreach ($globalAliasMap as $key => $val) {
+                if ($this->normalizeVietnamese($key) === $normalizedOfficial) {
+                    $aliases = $val;
+                    break;
+                }
             }
-            // Kiểm tra alias (nếu có)
-            foreach ($aliasMap as $official => $aliases) {
-                if ($official === $subjectName || $this->normalizeVietnamese($official) === $normalizedSubject) {
-                    foreach ($aliases as $alias) {
-                        if (mb_strpos($normalizedText, $this->normalizeVietnamese($alias)) !== false) {
-                            $foundSubject = true;
-                            break 3; // Thoát 3 vòng lặp
-                        }
-                    }
+
+            // Danh sách các từ cần tìm kiếm (đã chuẩn hóa)
+            $searchTerms = array_unique(array_merge(
+                [$normalizedOfficial], 
+                array_map([$this, 'normalizeVietnamese'], $aliases)
+            ));
+            
+            foreach ($searchTerms as $term) {
+                if ($term && mb_strpos($normalizedText, $term) !== false) {
+                    $detectedOfficialNames[] = $officialName;
+                    break; 
                 }
             }
         }
 
-        if (!$foundSubject) {
+        // TỐI ƯU HÓA: Chỉ gọi AI nếu tìm thấy ít nhất 1 môn học khớp với DB
+        if (empty($detectedOfficialNames)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy môn học nào có trong thời khóa biểu hôm nay trong đoạn văn bản của bạn.'
+                'message' => 'Không tìm thấy môn học nào trong văn bản khớp với thời khóa biểu hôm nay. Vui lòng kiểm tra lại tên môn học hoặc viết đúng tên môn (ví dụ: Toán, Văn, Anh...).'
             ], 422);
         }
 
-        // 5. Gọi AI để parse
-        $results = $this->aiService->parseHomework($text, $validSubjects);
+        // 5. Gọi AI để parse (Chỉ gửi danh sách các môn đã detect được để AI tập trung hơn)
+        $results = $this->aiService->parseHomework($text, $detectedOfficialNames);
 
         // 6. Validate lại kết quả AI (chỉ giữ lại môn học có trong TKB)
         $validatedResults = [];
         foreach ($results as $item) {
             if (isset($item['subject'])) {
-                // Tìm môn học tương ứng trong danh sách hợp lệ (không phân biệt hoa thường and dấu)
+                // Tìm môn học tương ứng trong danh sách hợp lệ
                 $matchedSubject = null;
                 $normalizedItemSubject = $this->normalizeVietnamese($item['subject']);
                 
                 foreach ($timetables as $tt) {
-                    if ($this->normalizeVietnamese($tt->subject->name) === $normalizedItemSubject) {
+                    $officialName = $tt->subject->name;
+                    $normalizedOfficial = $this->normalizeVietnamese($officialName);
+
+                    // 1. So khớp trực tiếp
+                    if ($normalizedOfficial === $normalizedItemSubject) {
                         $matchedSubject = $tt;
                         break;
+                    }
+
+                    // 2. So khớp qua aliasMap
+                    if (isset($aliasMap[$officialName])) {
+                        foreach ($aliasMap[$officialName] as $alias) {
+                            if ($this->normalizeVietnamese($alias) === $normalizedItemSubject) {
+                                $matchedSubject = $tt;
+                                break 2;
+                            }
+                        }
                     }
                 }
 
@@ -159,7 +207,7 @@ class AIHomeworkController extends Controller
                         try {
                             $parsedDue = Carbon::parse($dueDate)->startOfDay();
                             if ($parsedDue->lessThan($today)) {
-                                $dueDate = null; // Hoặc có thể set là $date (ngày giao)
+                                $dueDate = null;
                             }
                         } catch (\Exception $e) {
                             $dueDate = null;
@@ -168,7 +216,7 @@ class AIHomeworkController extends Controller
 
                     $validatedResults[] = [
                         'subject_id' => $matchedSubject->subject_id,
-                        'subject_name' => $matchedSubject->subject_name ?? $matchedSubject->subject->name,
+                        'subject_name' => $matchedSubject->subject->name,
                         'content' => $item['content'] ?? '',
                         'due_date' => $dueDate,
                     ];
@@ -183,9 +231,30 @@ class AIHomeworkController extends Controller
             ], 422);
         }
 
+        // Gộp kết quả theo môn học (gom content)
+        $groupedResults = collect($validatedResults)->groupBy('subject_id')->map(function ($items) {
+            $first = $items->first();
+            
+            // Nếu các mục cùng môn có nội dung khác nhau, gộp lại bằng xuống dòng
+            $combinedContent = $items->pluck('content')
+                ->filter()
+                ->unique()
+                ->implode("\n");
+
+            // Ưu tiên deadline sớm nhất cho môn đó (hoặc giữ nguyên nếu cùng deadline)
+            $earliestDueDate = $items->pluck('due_date')->filter()->min();
+
+            return [
+                'subject_id' => $first['subject_id'],
+                'subject_name' => $first['subject_name'],
+                'content' => $combinedContent,
+                'due_date' => $earliestDueDate,
+            ];
+        })->values()->toArray();
+
         return response()->json([
             'success' => true,
-            'data' => $validatedResults
+            'data' => $groupedResults
         ]);
     }
 }

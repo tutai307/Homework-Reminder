@@ -7,11 +7,18 @@ use App\Models\ClassModel;
 use App\Models\Homework;
 use App\Models\HomeworkItem;
 use App\Models\Timetable;
+use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DailyHomeworkController extends Controller
 {
+    protected $aiService;
+
+    public function __construct(AIService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
     /**
      * Display form to select class and date.
      */
@@ -372,6 +379,32 @@ class DailyHomeworkController extends Controller
             $selectedDate,
             $earlyRemindItems
         );
+
+        // --- BỔ SUNG: AI TẠO KẾ HOẠCH HỌC TẬP ---
+        $allHomeworkItems = collect()
+            ->concat($nextDayItems)
+            ->concat($dayAfterNextItems)
+            ->concat($earlyRemindItems)
+            ->filter();
+
+        if ($allHomeworkItems->count() > 0) {
+            $formattedData = $allHomeworkItems->map(function($item) {
+                return [
+                    'subject' => $item->subject?->name,
+                    'content' => $item->content,
+                    'due_date' => $item->due_date ? $item->due_date->format('Y-m-d') : null,
+                ];
+            })->values()->toArray();
+
+            $studyPlan = $this->aiService->generateStudyPlan($formattedData, $selectedDate->format('Y-m-d'));
+            
+            if (!empty($studyPlan)) {
+                $message .= "\n\n━━━━━━━━━━━━━━━━━━━━\n";
+                $message .= "💡 [GỢI Ý KẾ HOẠCH HỌC TẬP]\n";
+                $message .= $studyPlan;
+            }
+        }
+        // --- KẾT THÚC BỔ SUNG ---
 
         return response()->json([
             'success' => true,

@@ -260,35 +260,37 @@
         const normalizeVietnamese = (str) => {
             if (!str) return '';
             str = str.toLowerCase();
-            const map = {
-                'hoá': 'hóa', 'hoà': 'hòa', 'hoả': 'hỏa', 'hoã': 'hóa', 'hoạ': 'họa',
-                'oá': 'óa', 'oà': 'òa', 'oả': 'ỏa', 'oã': 'óa', 'oạ': 'ọa',
-                'uý': 'úy', 'uỳ': 'ủy', 'uỷ': 'ủy', 'uỹ': 'úy', 'uỵ': 'ụy'
-            };
-            for (let key in map) {
-                str = str.replace(new RegExp(key, 'g'), map[key]);
-            }
-            return str;
+            // 1. Xử lý i/y
+            str = str.replace(/í|ý/g, 'i');
+            str = str.replace(/ì|ỳ/g, 'i');
+            str = str.replace(/ỉ|ỷ/g, 'i');
+            str = str.replace(/ĩ|ỹ/g, 'i');
+            str = str.replace(/ị|ỵ/g, 'i');
+            str = str.replace(/y/g, 'i');
+
+            // 2. Loại bỏ dấu tiếng Việt hoàn toàn
+            str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            str = str.replace(/đ/g, "d");
+            
+            return str.trim();
         };
 
         const aliasMap = {
-            'Toán': ['toán học', 't'],
-            'Toán học': ['toán', 't'],
-            'Ngữ văn': ['văn', 'tiếng việt', 'nv'],
-            'Tiếng Anh': ['av', 'anh', 't.anh', 'english', 'nn1', 'ngoại ngữ'],
-            'Khoa học tự nhiên': ['khtn', 'tự nhiên', 'lý-hóa-sinh', 'lý hóa sinh', 'lý', 'hóa', 'sinh'],
-            'Lịch sử và Địa lý': ['ls-đl', 'sử-địa', 'sử địa', 'sử', 'địa', 'lsđl'],
-            'Giáo dục công dân': ['gdcd', 'công dân', 'đạo đức'],
-            'Tin học': ['tin', 'th'],
-            'Công nghệ': ['cn', 'kỹ thuật'],
-            'Giáo dục thể chất': ['gdtc', 'thể dục', 'td'],
-            'Nghệ thuật': ['âm nhạc', 'mĩ thuật', 'vẽ', 'nhạc', 'nt', 'mỹ thuật'],
-            'Âm nhạc': ['nhạc', 'an'],
-            'Mĩ thuật': ['vẽ', 'mt', 'mỹ thuật'],
-            'Hoạt động trải nghiệm, hướng nghiệp': ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'tnhn'],
-            'Hoạt động trải nghiệm': ['hđtn', 'trải nghiệm', 'tnhn'],
-            'Giáo dục địa phương': ['gdđp', 'địa phương'],
-            'Ngoại ngữ 2': ['nn2', 'tiếng nhật', 'tiếng trung', 'tiếng pháp', 'tiếng hàn'],
+            'Toán': ['toán', 't', 'toan'],
+            'Ngữ văn': ['văn', 'nv', 'ngu van', 'soan van', 'tieng viet'],
+            'Tiếng Anh': ['anh', 'av', 'english', 'tieng anh'],
+            'Khoa học tự nhiên': ['khtn', 'tu nhien', 'ly', 'hoa', 'sinh', 'vat ly', 'hoa hoc', 'sinh hoc'],
+            'Lịch sử và Địa lí': ['lsdl', 'su dia', 'su', 'dia', 'lich su', 'dia ly', 'ls', 'dl'],
+            'Giáo dục công dân': ['gdcd', 'cong dan', 'dao duc'],
+            'Tin học': ['tin', 'th', 'tin hoc'],
+            'Công nghệ': ['cn', 'cong nghe'],
+            'GDTC': ['gdtc', 'the duc', 'td', 'tap the duc'],
+            'Nghệ thuật': ['ve', 'nhac', 'my thuat', 'am nhac', 'mi thuat', 'nt'],
+            'Âm nhạc': ['nhac', 'an', 'am nhac'],
+            'Mĩ thuật': ['ve', 'mt', 'my thuat', 'mi thuat'],
+            'HĐTN HN': ['hdtn', 'trai nghiem', 'huong nghiep'],
+            'Giáo dục ĐP': ['gddp', 'dia phuong'],
+            'Sinh hoạt': ['shl', 'sinh hoat', 'sh'],
         };
 
         btnStartParse.addEventListener('click', function() {

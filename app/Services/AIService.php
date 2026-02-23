@@ -17,26 +17,42 @@ class AIService
     {
         $subjectsList = implode(', ', $subjects);
         
-        $now = \Carbon\Carbon::now()->format('Y-m-d');
-        $prompt = "Bạn là một trợ lý giáo vụ chuyên nghiệp. Nhiệm vụ của bạn là trích xuất thông tin bài tập từ văn bản tiếng Việt.
-Danh sách các môn học hợp lệ: [{$subjectsList}].
+        $now = \Carbon\Carbon::now();
+        $nowDate = $now->format('Y-m-d');
+        $dayOfWeek = $now->dayOfWeek; // 0 (Sun) to 6 (Sat)
+        
+        $prompt = "Bạn là một trợ lý giáo vụ thông minh. Nhiệm vụ của bạn là trích xuất và chuẩn hóa bài tập về nhà từ văn bản tiếng Việt lộn xộn.
 
-Quy tắc trích xuất:
-1. Chỉ trích xuất bài tập cho các môn học có tên (hoặc từ viết tắt tương đương) trong danh sách hợp lệ ở trên. 
-   - AI phải thông minh để hiểu các từ viết tắt phổ biến: CN (Công nghệ), Nhạc (Âm nhạc), AV/Tiếng Anh (Tiếng Anh), Sử (Lịch sử), Địa (Địa lý), GDCD (Giáo dục công dân),...
-   - Kết quả 'subject' PHẢI là tên chính thức từ danh sách hợp lệ.
-2. Với mỗi môn học tìm thấy, hãy tách rõ:
-   - 'subject': Tên môn học (PHẢI TRÙNG KHỚP HOÀN TOÀN với tên trong danh sách hợp lệ).
-   - 'content': Nội dung yêu cầu bài tập (ví dụ: 'làm bài 1,2 trang 45'). KHÔNG bao gồm thông tin về hạn nộp trong này.
-   - 'due_date': Hạn nộp bài tập. Định dạng bắt buộc: YYYY-MM-DD. 
-     - Ngày hiện tại (Today) là: {$now}.
-     - Quy tắc quan trọng: 'due_date' PHẢI từ ngày hiện tại ({$now}) trở về sau. Tuyệt đối không trích xuất ngày trong quá khứ.
-     - Nếu người dùng ghi 'hạn 2/3' và năm hiện tại là 2026, hãy chuyển thành '2026-03-02'. 
-     - Nếu ghi 'hạn tuần sau', hãy tự tính toán dựa trên ngày hiện tại là {$now}. 
-     - Nếu không có hạn nộp hoặc hạn nộp là ngày quá khứ, hãy để null.
-3. Kết quả trả về là mảng JSON các đối tượng.
-4. Nếu không có bài tập nào cho các môn hợp lệ, trả về mảng rỗng [].
-5. Chỉ trả về JSON thuần túy, không giải thích.
+Danh sách các môn học CHÍNH THỨC hợp lệ: [{$subjectsList}].
+
+Quy tắc trích xuất ĐẶC BIỆT:
+
+1. Xử lý môn học Ghép (Ví dụ: 'Lịch sử và Địa lí'):
+   - Nếu văn bản có nội dung riêng cho 'Sử' và 'Địa' (như: 'Sử làm bài 7, Địa mang Atlat'), hãy hiểu cả hai đều thuộc môn 'Lịch sử và Địa lí'.
+   - Bạn có thể tạo nhiều đối tượng JSON cho cùng một môn chính thức nếu chúng có nội dung hoặc hạn nộp khác nhau.
+
+2. Nhận diện Viết tắt & Biến thể:
+   - Cực kỳ linh hoạt với: GDCD (Giáo dục công dân), GDTC (GDTC/Thể dục), KHTN (Khoa học tự nhiên), Văn (Ngữ văn), Anh/AV (Tiếng Anh), Sử/Địa (Lịch sử và Địa lý), CN (Công nghệ), Tin (Tin học), NT (Nghệ thuật)...
+   - 'subject' trong kết quả PHẢI LUÔN là tên CHÍNH THỨC từ danh sách trên.
+
+3. Chuẩn hóa Nội dung (Content):
+   - Trích xuất yêu cầu cụ thể (ví dụ: 'Làm bài 7 trang 14 SGK').
+   - Nếu nội dung lồng ghép nhiều phần, hãy viết mạch lạc.
+
+4. Chuẩn hóa Ngày nộp (Due Date):
+   - Hôm nay: {$nowDate} (Thứ {$dayOfWeek}).
+   - 'mai' -> " . $now->copy()->addDay()->format('Y-m-d') . ".
+   - 'tuần sau' -> " . $now->copy()->addDays(7)->format('Y-m-d') . ".
+   - 'thứ X' -> Tính toán ngày thứ X gần nhất sắp tới.
+   - Định dạng: YYYY-MM-DD.
+
+5. Định dạng đầu ra:
+   - Trả về mảng JSON thuần túy.
+   - Ví dụ đầu vào: 'Sử làm bài 7 trang 14sgk tuần sau kiểm tra, Địa mang alas'
+   - Ví dụ đầu ra: [
+       {\"subject\": \"Lịch sử và Địa lí\", \"content\": \"(Sử) làm bài 7 trang 14 SGK - tuần sau kiểm tra\", \"due_date\": \"{$now->copy()->addDays(7)->format('Y-m-d')}\"},
+       {\"subject\": \"Lịch sử và Địa lí\", \"content\": \"(Địa) mang Atlat, học kĩ để kiểm tra miệng\", \"due_date\": null}
+     ]
 
 Văn bản đầu vào: \"{$text}\"";
 

@@ -141,12 +141,12 @@ Văn bản đầu vào: \"{$text}\"";
 
 {$itemsList}
 
-Ngày thực hiện kế hoạch: {$targetDate}.
+Ngày thực hiện kế hoạch (Hôm nay): {$targetDate}.
 
-Yêu cầu phân tích và lập kế hoạch CHI TIẾT:
-1. Phân tích tổng quan: Đánh giá nhanh lượng bài tập hôm nay và ngày mai.
+Yêu cầu phân tích và lập kế hoạch CHI TIẾT CHỈ CHO HÔM NAY VÀ NGÀY MAI:
+1. Phân tích tổng quan: Đánh giá nhanh lượng bài tập cần xử lý trong 2 ngày (hôm nay và ngày mai).
 2. Chiến thuật làm bài (Trình tự thông minh): 
-   - Đề xuất môn nào làm trước, môn nào làm sau.
+   - Đề xuất môn nào làm trước, môn nào làm sau. Phân bổ hợp lý cho tối nay và ngày mai.
    - Chiến thuật: Bắt đầu bằng một môn dễ/yêu thích để tạo đà (5-10p), sau đó tập trung vào môn khó nhất/hạn nộp gần nhất khi não còn tỉnh táo, cuối cùng là các môn học thuộc nhẹ nhàng.
 3. Ước tính thời gian THỰC TẾ (CỰC KỲ QUAN TRỌNG):
    - Ước lượng thời gian tối giản và hiệu quả, tránh đưa ra thời gian quá dài không thực tế (VD: Soạn văn chỉ 15-30p, bài tập Toán 30-45p, không để 90-120p cho các bài tập thông thường).

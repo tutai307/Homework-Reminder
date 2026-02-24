@@ -5,9 +5,10 @@ Hệ thống quản lý thời khóa biểu và giao bài tập hàng ngày thô
 
 ## ✨ Tính năng nổi bật
 
-### 🤖 AI Smart Entry (Nhập liệu thông minh)
-- Tự động phân tách bài tập từ văn bản tự do.
-- Nhận diện môn học qua tên viết tắt (vd: Anh, Văn, Toán, Nhạc...).
+### 🤖 AI Smart Entry & Planner (Nhập liệu & Lập kế hoạch)
+- Tự động phân tách bài tập từ văn bản tự do với Pipeline 4 giai đoạn.
+- **AI Study Plan:** Tự động đề xuất kế hoạch học tập tối ưu dựa trên lượng bài tập và deadline.
+- Nhận diện môn học thông minh qua tên viết tắt và hỗ trợ môn học ghép (Sử/Địa).
 - Tự động tính toán hạn nộp (Deadline) dựa trên thời khóa biểu thực tế.
 
 ### 📅 Quản lý bài tập & Preview

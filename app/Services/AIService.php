@@ -119,6 +119,107 @@ Văn bản đầu vào: \"{$text}\"";
     }
 
     /**
+     * Parse timetable from an image.
+     *
+     * @param string $imageBase64 Base64 encoded image data
+     * @param array $subjects Array of valid subject names
+     * @param string $className The target class name to focus on
+     * @return array
+     */
+    public function parseTimetableFromImage(string $imageBase64, array $subjects, string $className): array
+    {
+        $subjectsList = implode(', ', $subjects);
+        
+        $prompt = "Bạn là chuyên gia trích xuất dữ liệu từ hình ảnh thời khóa biểu.
+NHIỆM VỤ: Trích xuất thời khóa biểu của lớp \"{$className}\".
+
+QUY TẮC ĐỌC ẢNH (BẮT BUỘC):
+1. Đọc theo từng HÀNG NGANG (tương ứng với các TIẾT học).
+2. Hình ảnh thường chia thành 2 phần: \"Buổi sáng\" và \"Buổi chiều\".
+   - 5 hàng đầu tiên dưới tiêu đề Buổi sáng là Tiết 1, 2, 3, 4, 5.
+   - 5 hàng tiếp theo dưới tiêu đề Buổi chiều là Tiết 6, 7, 8, 9, 10.
+3. Với mỗi HÀNG (Tiết), hãy liệt kê môn học của các THỨ (từ Thứ 2 đến Thứ 7).
+
+CẤU TRÚC JSON TRẢ VỀ (BẮT BUỘC):
+{
+  \"1\": { \"2\": \"Môn A\", \"3\": \"Môn B\", \"4\": \"Môn C\", \"5\": \"Môn D\", \"6\": \"Môn E\", \"7\": \"Môn F\" }, // Tiết 1
+  \"2\": { \"2\": \"...\", \"3\": \"...\", ... }, // Tiết 2
+  ...
+  \"10\": { \"2\": \"...\", ... } // Tiết 10
+}
+- Key cấp 1: Số TIẾT học (từ 1 đến 10).
+- Key cấp 2: Số THỨ (từ 2 đến 7).
+
+QUY TRÌNH ĐỐI SOÁT MÔN HỌC:
+- Danh sách môn hợp lệ: [{$subjectsList}].
+- Tên môn học phải khớp hoặc gần đúng nhất với danh sách trên (VD: 'LS-ĐL' -> 'Lịch sử và Địa lí').
+
+LƯU Ý:
+- Nếu ô trống, trả về null.
+- Chỉ trả về JSON thuần túy, không giải thích.";
+
+        try {
+            $apiKey = config('openai.api_key');
+            $baseUrl = 'https://api.openai.com/v1';
+            
+            if ($apiKey && str_starts_with($apiKey, 'sk-or-')) {
+                $baseUrl = 'https://openrouter.ai/api/v1';
+            }
+
+            $client = new \GuzzleHttp\Client([
+                'timeout' => 60, // Tăng timeout cho xử lý hình ảnh
+            ]);
+
+            // Chuẩn bị payload cho GPT-4o-Vision (qua OpenRouter hoặc OpenAI trực tiếp)
+            $messages = [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        [
+                            'type' => 'text',
+                            'text' => $prompt
+                        ],
+                        [
+                            'type' => 'image_url',
+                            'image_url' => [
+                                'url' => $imageBase64 // Hy vọng base64 đã bao gồm tiền tố data:image/...
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+
+            $response = $client->post($baseUrl . '/chat/completions', [
+                'headers' => [
+                    'Authorization' => "Bearer {$apiKey}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'model' => 'openai/gpt-4o', // Model này hỗ trợ Vision và rẻ/nhanh
+                    'messages' => $messages,
+                    'temperature' => 0.1,
+                    'max_tokens' => 2000,
+                ]
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            $content = $result['choices'][0]['message']['content'] ?? '';
+            
+            // Trích xuất JSON từ markdown nếu cần
+            if (preg_match('/\{.*\}/s', $content, $matches)) {
+                $content = $matches[0];
+            }
+
+            $data = json_decode($content, true);
+            
+            return is_array($data) ? $data : [];
+        } catch (\Exception $e) {
+            \Log::error('AI Timetable Image Parse Error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Generate a study plan based on homework items.
      *
      * @param array $items Array of items with 'subject', 'content', and 'due_date'

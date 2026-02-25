@@ -39,6 +39,7 @@ Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function (
     Route::get('timetables', [\App\Http\Controllers\Teacher\TimetableController::class, 'index'])->name('timetables.index');
     Route::get('timetables/{class}/create', [\App\Http\Controllers\Teacher\TimetableController::class, 'create'])->name('timetables.create');
     Route::post('timetables/{class}', [\App\Http\Controllers\Teacher\TimetableController::class, 'store'])->name('timetables.store');
+    Route::post('timetables/{class}/import-image', [\App\Http\Controllers\Teacher\AITimetableController::class, 'parseImage'])->name('timetables.import-image');
     
     Route::get('daily-homework', [\App\Http\Controllers\Teacher\DailyHomeworkController::class, 'index'])->name('daily-homework.index');
     Route::get('daily-homework/list', [\App\Http\Controllers\Teacher\DailyHomeworkController::class, 'list'])->name('daily-homework.list');

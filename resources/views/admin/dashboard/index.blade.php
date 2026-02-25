@@ -146,9 +146,6 @@
                     <div class="chart-container">
                         <canvas id="subjectDistributionChart"></canvas>
                     </div>
-                    <div class="mt-4 text-center small">
-                        Dựa trên số lượng bài tập hôm nay
-                    </div>
                 </div>
             </div>
         </div>

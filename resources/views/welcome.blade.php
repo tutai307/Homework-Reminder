@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Homework-Reminder - Hệ thống nhắc bài tập thông minh</title>
+    <title>Homework-Reminder | Smart Academic Management</title>
 
     <!-- Favicons -->
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
@@ -13,62 +13,77 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Be Vietnam Pro -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- AOS (Animate on Scroll) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <style>
         :root {
-            --primary-color: #0d6efd;
-            --primary-soft: rgba(13, 110, 253, 0.05);
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --bg-light: #f8fafc;
+            --primary: #0284c7; /* Blue - Xanh */
+            --primary-light: #e0f2fe;
+            --primary-dark: #0369a1;
+            --secondary: #0ea5e9;
+            --accent: #38bdf8;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.85);
+            --gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            --shadow: 0 10px 30px -5px rgba(2, 132, 199, 0.1);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            color: var(--text-dark);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: var(--dark);
             background-color: #fff;
-            scroll-behavior: smooth;
+            overflow-x: hidden;
         }
 
-        /* Navbar */
+        /* Glassmorphism Classes */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow);
+            border-radius: 24px;
+        }
+
+        /* Navbar Customization */
         .navbar {
             padding: 1.25rem 0;
-            transition: all 0.3s ease;
-            background: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
         }
 
         .navbar.scrolled {
             padding: 0.75rem 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
         }
 
         .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color) !important;
-            display: flex;
-            align-items: center;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--primary-dark) !important;
+            letter-spacing: -0.5px;
         }
 
         .nav-link {
-            font-weight: 500;
-            color: var(--text-dark) !important;
-            margin: 0 0.5rem;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: var(--primary-color) !important;
+            font-weight: 600;
+            color: var(--dark) !important;
+            margin: 0 0.8rem;
+            font-size: 0.95rem;
         }
 
         /* Hero Section */
-        .hero-section {
-            padding: 100px 0 80px;
-            background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 100%);
-            overflow: hidden;
+        .hero {
+            padding: 160px 0 100px;
+            background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+            position: relative;
         }
 
         .hero-title {
@@ -76,57 +91,37 @@
             font-weight: 800;
             line-height: 1.2;
             margin-bottom: 1.5rem;
-            color: var(--text-dark);
+            color: var(--dark);
         }
 
-        .hero-description {
-            font-size: 1.25rem;
-            color: var(--text-muted);
-            margin-bottom: 2.5rem;
-            max-width: 600px;
+        .text-gradient {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .hero-image-container {
-            position: relative;
-        }
-
-        .hero-image-container img {
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            width: 100%;
-        }
-
-        /* Feature Section */
-        .section-padding {
-            padding: 100px 0;
-        }
-
-        .section-title {
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card {
+        /* Value Prop Cards */
+        .value-card {
             padding: 2.5rem;
-            border-radius: 20px;
-            border: 1px solid #f1f5f9;
-            background: #fff;
-            height: 100%;
+            border-radius: 24px;
             transition: all 0.3s ease;
+            height: 100%;
+            border: 1px solid #e2e8f0;
+            background: #fff;
         }
 
-        .feature-card:hover {
+        .value-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05);
-            border-color: var(--primary-soft);
+            border-color: var(--primary-light);
+            box-shadow: 0 20px 40px -10px rgba(2, 132, 199, 0.1);
         }
 
-        .feature-icon {
+        .icon-circle {
             width: 60px;
             height: 60px;
-            background: var(--primary-soft);
-            color: var(--primary-color);
-            border-radius: 15px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -134,138 +129,89 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Audience Section */
-        .audience-section {
-            background-color: var(--bg-light);
+        /* Section Headings */
+        .section-padding { padding: 100px 0; }
+        .section-tag {
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
         }
 
-        .audience-card {
-            background: #fff;
+        /* Tech Stack Icons */
+        .tech-box {
             padding: 2rem;
             border-radius: 20px;
-            height: 100%;
+            background: #fff;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+            transition: all 0.3s;
         }
-
-        .audience-highlight {
-            color: var(--primary-color);
-            font-weight: 600;
+        .tech-box:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
+        .tech-box i { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
 
-        /* CTA Section */
-        .cta-section {
-            background-color: var(--primary-color);
-            color: #fff;
-            border-radius: 30px;
-            padding: 60px;
-            margin-bottom: 80px;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+        /* Buttons */
+        .btn-custom {
             padding: 0.8rem 2rem;
-            font-weight: 600;
             border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.3s;
         }
-
-        .btn-outline-primary {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            padding: 0.8rem 2rem;
-            font-weight: 600;
-            border-radius: 12px;
-        }
-
-        .icon-circle-sm {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            flex-shrink: 0;
-        }
-
-        .x-small {
-            font-size: 0.75rem;
-        }
-
-        .clickable-img {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .clickable-img:hover {
-            transform: scale(1.02);
-            filter: brightness(0.9);
-        }
-
-        #imageModal .modal-content {
-            background-color: transparent;
+        .btn-primary-custom {
+            background: var(--gradient);
+            color: white !important;
             border: none;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+            text-decoration: none;
         }
-        
-        #imageModal .modal-body {
-            padding: 0;
-        }
-
-        #imageModal img {
-            border-radius: 15px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            max-height: 90vh;
-            object-fit: contain;
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(2, 132, 199, 0.4);
+            color: white !important;
         }
 
         /* Footer */
-        footer {
-            background-color: #fff;
-            border-top: 1px solid #f1f5f9;
-            padding: 60px 0 30px;
-        }
+        footer { background: #0f172a; color: #94a3b8; padding: 80px 0 40px; }
+        .footer-title { color: white; font-weight: 700; margin-bottom: 1.5rem; }
+        .footer-link { color: #94a3b8; text-decoration: none; display: block; margin-bottom: 0.75rem; transition: 0.3s; }
+        .footer-link:hover { color: var(--primary-light); }
 
-        /* Animations */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease-out;
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @media (max-width: 991.98px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-            .cta-section {
-                padding: 40px 20px;
-                border-radius: 0;
-            }
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg sticky-top">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top shadow-none" id="mainNav">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="bi bi-journal-bookmark-fill me-2"></i>HW Reminder
+                <i class="bi bi- Mortarboard-fill me-2 text-primary"></i>HW REMINDER
             </a>
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
-                <i class="bi bi-list fs-1"></i>
+                <i class="bi bi-list fs-1 text-primary"></i>
             </button>
             <div class="collapse navbar-collapse" id="navLinks">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="#intro">Giới thiệu</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#features">Tính năng</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#audience">Đối tượng</a></li>
-                    <li class="nav-item ms-lg-4 mt-3 mt-lg-0">
-                        <a href="{{ route('login') }}" class="btn btn-primary w-100">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                    <li class="nav-item"><a class="nav-link" href="#solution">Giải pháp</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#activities">Hoạt động</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tech">Công nghệ</a></li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                        <a href="{{ route('login') }}" class="btn btn-primary-custom btn-custom">
+                            Đăng nhập ngay
                         </a>
                     </li>
                 </ul>
@@ -274,119 +220,182 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section" id="intro">
+    <header class="hero">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-lg-6 mb-5 mb-lg-0">
-                    <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-3 fw-semibold">Giao bài tập thông minh</span>
-                    <h1 class="hero-title">Nhắc bài tập chuyên nghiệp, giảm áp lực quên bài.</h1>
-                    <p class="hero-description">Giải pháp quản lý bài tập hằng ngày giúp học sinh tự giác, giáo viên nhàn nhã và phụ huynh yên tâm hơn mỗi tối.</p>
-                    <div class="d-flex flex-column flex-sm-row gap-3">
-                        <a href="{{ route('login') }}" class="btn btn-primary btn-lg">Bắt đầu ngay</a>
-                        <a href="#features" class="btn btn-outline-primary btn-lg">Tìm hiểu thêm</a>
+                <div class="col-lg-6" data-aos="fade-right">
+                    <span class="section-tag">Smart Academic Management</span>
+                    <h1 class="hero-title">Quản lý bài tập thông minh <br><span class="text-gradient">Hỗ trợ học tập</span></h1>
+                    <p class="text-muted mb-4 fs-5">Homework Reminder giúp học sinh bứt phá, giáo viên tối ưu thời gian và phụ huynh luôn an tâm.</p>
+                    <div class="d-flex gap-3">
+                        <a href="{{ route('login') }}" class="btn btn-primary-custom btn-custom btn-lg">Bắt đầu miễn phí</a>
+                        <a href="#solution" class="btn btn-outline-primary btn-custom btn-lg">Khám phá</a>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <div class="hero-image-container">
-                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" alt="Học sinh sử dụng hệ thống" class="img-fluid">
+                <div class="col-lg-6 mt-5 mt-lg-0" data-aos="zoom-in">
+                    <div class="position-relative">
+                        <img src="{{ asset('storage/images/screenshot-main.png') }}" class="img-fluid rounded-4 shadow-lg p-2 bg-white" alt="Dashboard Preview" onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80'">
+                        <div class="position-absolute bottom-0 end-0 bg-white p-3 rounded-4 shadow-sm mb-n4 me-n3 d-none d-md-block" style="width: 200px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <span class="fw-bold small">Dự án phi lợi nhuận</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </header>
 
-    <!-- Features Section -->
-    <section class="section-padding" id="features">
+    <!-- Value Propositions (Giải pháp giá trị) -->
+    <section class="section-padding" id="solution">
         <div class="container">
-            <div class="text-center mb-5 reveal">
-                <h2 class="section-title">Tính năng cốt lõi</h2>
-                <p class="text-muted">Được thiết kế tinh gọn để đáp ứng nhu cầu thực tế của lớp học.</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <span class="section-tag">Giá trị cốt lõi</span>
+                <h2 class="section-title">Giải pháp toàn diện cho mọi đối tượng</h2>
             </div>
             <div class="row g-4">
-                <div class="col-md-6 col-lg-3 reveal">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="bi bi-calendar-check"></i></div>
-                        <h5>Quản lý theo ngày</h5>
-                        <p class="text-muted small mb-0">Theo dõi bài tập hằng ngày theo lịch học cụ thể của từng lớp.</p>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="value-card">
+                        <div class="icon-circle"><i class="bi bi-person-lines-fill"></i></div>
+                        <h4 class="fw-bold">Cho Học sinh</h4>
+                        <p class="text-muted">Không bao giờ bỏ lỡ bài tập. Thông tin hiển thị rõ ràng, khoa học giúp tập trung tối đa vào việc học.</p>
+                        <ul class="list-unstyled small mt-3">
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Không quên bài tập</li>
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Thông tin bài tập rõ ràng</li>
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Được AI tư vấn lộ trình học</li>
+                        </ul>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 reveal">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="bi bi-robot"></i></div>
-                        <h5>Nhập liệu bằng AI</h5>
-                        <p class="text-muted small mb-0">Tự động trích xuất bài tập từ văn bản thô giúp tiết kiệm thời gian.</p>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="value-card">
+                        <div class="icon-circle"><i class="bi bi-shield-check"></i></div>
+                        <h4 class="fw-bold">Cho Phụ huynh</h4>
+                        <p class="text-muted">Theo dõi tiến độ học tập của con nhanh chóng qua Public Portal mà không cần quy trình đăng nhập phức tạp.</p>
+                        <ul class="list-unstyled small mt-3">
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Theo dõi qua Portal (No-Login)</li>
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Cập nhật 24/7 tức thì</li>
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Theo dõi thời khoá biểu của con</li>
+                        </ul>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 reveal">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="bi bi-chat-left-dots"></i></div>
-                        <h5>Nhắc bài qua Zalo</h5>
-                        <p class="text-muted small mb-0">Tạo mẫu tin nhắn chuyên nghiệp gửi vào nhóm lớp chỉ với 1 click.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3 reveal">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="bi bi-lightning-charge"></i></div>
-                        <h5>Kế hoạch học tập</h5>
-                        <p class="text-muted small mb-0">AI tư vấn lộ trình làm bài tập tối ưu dựa trên độ khó và hạn nộp.</p>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="value-card">
+                        <div class="icon-circle"><i class="bi bi-cpu"></i></div>
+                        <h4 class="fw-bold">Hệ thống AI</h4>
+                        <p class="text-muted">Hệ thống hỗ trợ học tập khoa học, tập trung nguồn lực thông tin. Dữ liệu chuẩn hóa giúp lớp học vận hành chuyên nghiệp.</p>
+                        <ul class="list-unstyled small mt-3">
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Tư vấn AI lộ trình học</li>
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Giao bài thông qua prompt</li>
+                            <li class="mb-2 text-primary-dark fw-medium"><i class="bi bi-check2 me-2 text-primary"></i>Quét thời khoá biểu nhanh bằng AI</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Product Showcase Section -->
-    <section class="section-padding bg-light" id="showcase">
+    <!-- Key Activities (Hoạt động chính) -->
+    <section class="section-padding bg-light" id="activities">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-5 mb-5 mb-lg-0 reveal">
-                    <h2 class="section-title">Giao diện trực quan</h2>
-                    <p class="text-muted mb-4">Khám phá các màn hình quản lý bài tập và lịch học được tối ưu hóa cho giáo viên và ban cán sự lớp.</p>
-                    <div class="list-group list-group-flush bg-transparent">
-                        <div class="list-group-item bg-transparent border-0 px-0 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="icon-circle-sm bg-primary text-white me-3"><i class="bi bi-1-circle"></i></div>
-                                <div>
-                                    <h6 class="fw-bold mb-0">Dashboard Tổng quan</h6>
-                                    <p class="text-muted small mb-0">Quản lý toàn bộ lớp học trên một màn hình.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item bg-transparent border-0 px-0 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="icon-circle-sm bg-primary text-white me-3"><i class="bi bi-2-circle"></i></div>
-                                <div>
-                                    <h6 class="fw-bold mb-0">Lịch học chi tiết</h6>
-                                    <p class="text-muted small mb-0">Hiện thị bài tập theo dòng thời gian.</p>
-                                </div>
-                            </div>
-                        </div>
+            <div class="row align-items-center mb-5">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <span class="section-tag">Cách thức vận hành</span>
+                    <h2 class="section-title">Nền tảng số hóa mọi <br>hoạt động lớp học</h2>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up">
+                    <div class="glass-card p-4 h-100 border-0">
+                        <i class="bi bi-calendar3 fs-2 text-primary mb-3 d-block"></i>
+                        <h5 class="fw-bold">Quản lý TKB & Môn học</h5>
+                        <p class="small text-muted mb-0">Hệ thống hóa môn học và lịch trình hàng tuần một cách trực quan, chính xác.</p>
                     </div>
                 </div>
-                <div class="col-lg-7 reveal">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="glass-card p-4 h-100 border-0">
+                        <i class="bi bi-journal-check fs-2 text-primary mb-3 d-block"></i>
+                        <h5 class="fw-bold">Tổng hợp Bài tập</h5>
+                        <p class="small text-muted mb-0">Thu thập bài tập hàng ngày tự động, bóc tách môn học và thời hạn nộp.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="glass-card p-4 h-100 border-0">
+                        <i class="bi bi-people fs-2 text-primary mb-3 d-block"></i>
+                        <h5 class="fw-bold">Quản lý Ban cán sự</h5>
+                        <p class="small text-muted mb-0">Hỗ trợ Lớp trưởng, Lớp phó cùng tham gia quản trị và điều phối học tập.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="glass-card p-4 h-100 border-0">
+                        <i class="bi bi-chat-dots fs-2 text-primary mb-3 d-block"></i>
+                        <h5 class="fw-bold">Công cụ Nhắc bài</h5>
+                        <p class="small text-muted mb-0">Soạn tin nhắn nhắc bài chuyên nghiệp để gửi vào các nhóm mạng xã hội lớp.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack (Tài nguyên chính) -->
+    <section class="section-padding" id="tech">
+        <div class="container">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-5" data-aos="fade-right">
+                    <span class="section-tag">Hạ tầng Công nghệ</span>
+                    <h2 class="section-title">Nền tảng vững chắc đạt <br>tiêu chuẩn Enterprise</h2>
+                    <p class="text-muted mb-4">Chúng tôi lựa chọn những công nghệ hàng đầu để đảm bảo tính sẵn sàng, bảo mật và tốc độ cho hệ thống giáo dục.</p>
                     <div class="row g-3">
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                <img src="{{ asset('storage/images/screenshot-main.png') }}" class="img-fluid clickable-img" alt="Giao diện chính" onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80'">
-                                <div class="card-body p-2 text-center bg-white">
-                                    <span class="text-muted x-small">Màn hình điều khiển chính</span>
-                                </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-cpu text-primary"></i>
+                                <span class="small fw-bold">Laravel 11</span>
                             </div>
                         </div>
-                        <!-- <div class="col-5">
-                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                <img src="{{ asset('storage/images/screenshot-mobile-11.png') }}" class="img-fluid clickable-img" alt="Giao diện Mobile 1" onerror="this.src='https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=400&q=80'">
-                                <div class="card-body p-2 text-center bg-white">
-                                    <span class="text-muted x-small">Giao diện Mobile</span>
-                                </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-database text-primary"></i>
+                                <span class="small fw-bold">MySQL</span>
                             </div>
-                        </div> -->
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                <img src="{{ asset('storage/images/screenshot-mobile-2.png') }}" class="img-fluid clickable-img" alt="Giao diện Mobile 2" onerror="this.src='https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&w=400&q=80'">
-                                <div class="card-body p-2 text-center bg-white">
-                                    <span class="text-muted x-small">Nhắc bài qua Zalo</span>
-                                </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-cloud text-primary"></i>
+                                <span class="small fw-bold">Railway Cloud</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-link text-primary"></i>
+                                <span class="small fw-bold">Railway App</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7" data-aos="fade-left">
+                    <div class="row g-3 text-center">
+                        <div class="col-6 col-md-3">
+                            <div class="tech-box">
+                                <i class="bi bi-pc-display"></i>
+                                <span class="fw-bold small">Website</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="tech-box">
+                                <i class="bi bi-grid-1x2"></i>
+                                <span class="fw-bold small">Dashboard</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="tech-box">
+                                <i class="bi bi-chat-square-dots"></i>
+                                <span class="fw-bold small">SMS/Zalo</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="tech-box">
+                                <i class="bi bi-infinity"></i>
+                                <span class="fw-bold small">Railway</span>
                             </div>
                         </div>
                     </div>
@@ -394,143 +403,56 @@
             </div>
         </div>
     </section>
-
-    <!-- Audience Section -->
-    <section class="section-padding" id="audience">
-        <div class="container">
-            <div class="text-center mb-5 reveal">
-                <h2 class="section-title">Phù hợp với tất cả mọi người</h2>
-                <p class="text-muted">Hệ sinh thái kết nối Gia đình và Nhà trường hiệu quả hơn.</p>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4 reveal">
-                    <div class="audience-card shadow-sm">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-mortarboard me-2 text-primary"></i>Học sinh</h5>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Không lo quên bài tập</li>
-                            <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Quản lý thời gian hiệu quả</li>
-                            <li><i class="bi bi-check2-circle me-2 text-success"></i>Tăng tính tự giác học tập</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4 reveal">
-                    <div class="audience-card shadow-sm">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-briefcase me-2 text-primary"></i>Giáo viên / BSC</h5>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Giao bài tập nhanh chóng</li>
-                            <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Thống kê bài tập rõ ràng</li>
-                            <li><i class="bi bi-check2-circle me-2 text-success"></i>Chuyên nghiệp hóa việc nhắc bài</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4 reveal">
-                    <div class="audience-card shadow-sm">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-house-door me-2 text-primary"></i>Phụ huynh</h5>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Nắm bắt kịp thời bài tập của con</li>
-                            <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Yên tâm hơn về việc học</li>
-                            <li><i class="bi bi-check2-circle me-2 text-success"></i>Dễ dàng đôn đốc con cái</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Final CTA Section -->
-    <div class="container">
-        <section class="cta-section text-center reveal">
-            <h2 class="fw-bold mb-4">Sẵn sàng để chuyên nghiệp hóa quản lý lớp học?</h2>
-            <p class="mb-5 opacity-75">Bắt đầu trải nghiệm Homework-Reminder hoàn toàn miễn phí ngay hôm nay.</p>
-            <a href="{{ route('login') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold text-primary rounded-pill">Truy cập ngay</a>
-        </section>
-    </div>
 
     <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="row">
-                <div class="col-lg-6 mb-4 mb-lg-0">
-                    <h5 class="fw-bold text-primary mb-3">Homework-Reminder</h5>
-                    <p class="text-muted small">Hệ thống nhắc bài tập cá nhân và tập thể giúp tối ưu hóa việc học tập hằng ngày của học sinh Việt Nam.</p>
+            <div class="row g-5">
+                <div class="col-lg-5">
+                    <a class="navbar-brand text-white mb-4 d-block" href="#">
+                        <i class="bi bi- Mortarboard-fill me-2"></i>HW REMINDER
+                    </a>
+                    <p class="small mb-4">Dự án chuyển đổi số giáo dục phục vụ cộng đồng học sinh, giáo viên và phụ huynh học sinh. Chúng tôi mong muốn đóng góp một phần nhỏ vào sự phát triển của giáo dục Việt Nam.</p>
                 </div>
-                <div class="col-lg-3 mb-4 mb-lg-0">
-                    <h6 class="fw-bold mb-3">Liên kết</h6>
-                    <ul class="list-unstyled small">
-                        <li class="mb-2"><a href="#intro" class="text-muted text-decoration-none">Giới thiệu</a></li>
-                        <li class="mb-2"><a href="#features" class="text-muted text-decoration-none">Tính năng</a></li>
-                        <li><a href="{{ route('login') }}" class="text-muted text-decoration-none">Đăng nhập</a></li>
-                    </ul>
+                <div class="col-lg-3 ms-auto text-lg-end">
+                    <h6 class="footer-title">Kênh phân phối</h6>
+                    <span class="footer-link">Public Class Portal</span>
+                    <span class="footer-link">Admin Dashboard</span>
+                    <span class="footer-link">Nhóm lớp cộng đồng</span>
                 </div>
-                <div class="col-lg-3">
-                    <h6 class="fw-bold mb-3">Hỗ trợ</h6>
-                    <ul class="list-unstyled small">
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Hướng dẫn sử dụng</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Câu hỏi thường gặp</a></li>
-                    </ul>
+                <div class="col-lg-3 text-lg-end">
+                    <h6 class="footer-title">Đối tác & Phân khúc</h6>
+                    <span class="footer-link">Học sinh THCS-THPT</span>
+                    <span class="footer-link">Giáo viên & Nhà trường</span>
+                    <span class="footer-link">Phụ huynh nhận tin</span>
                 </div>
             </div>
-            <hr class="my-4 text-muted opacity-25">
-            <div class="text-center text-muted small">
-                &copy; {{ date('Y') }} Homework-Reminder. Tất cả quyền được bảo lưu.
+            <div class="border-top border-secondary mt-5 pt-4 text-center">
+                <p class="small text-muted mb-0">&copy; {{ date('Y') }} Homework-Reminder Project. Phục vụ với sứ mệnh giáo dục không vì lợi nhuận.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Image Modal -->
-    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-body text-center p-3">
-                    <img src="" id="modalImage" class="img-fluid" alt="Phóng to">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap 5 JS -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        // Navbar scrolled state
+        AOS.init({ duration: 800, once: true });
+        
         window.addEventListener('scroll', function() {
             if (window.scrollY > 50) {
-                document.querySelector('.navbar').classList.add('scrolled');
+                document.getElementById('mainNav').classList.add('scrolled', 'shadow-sm');
             } else {
-                document.querySelector('.navbar').classList.remove('scrolled');
+                document.getElementById('mainNav').classList.remove('scrolled', 'shadow-sm');
             }
         });
 
-        // Reveal animation on scroll
-        function reveal() {
-            var reveals = document.querySelectorAll(".reveal");
-            for (var i = 0; i < reveals.length; i++) {
-                var windowHeight = window.innerHeight;
-                var elementTop = reveals[i].getBoundingClientRect().top;
-                var elementVisible = 150;
-                if (elementTop < windowHeight - elementVisible) {
-                    reveals[i].classList.add("active");
-                }
-            }
-        }
-        window.addEventListener("scroll", reveal);
-        // Trigger reveal for elements in view on load
-        reveal();
-
-        // Image Modal Logic
-        const imageModalElement = document.getElementById('imageModal');
-        const modalImage = document.getElementById('modalImage');
-        
-        if (imageModalElement) {
-            const imageModal = new bootstrap.Modal(imageModalElement);
-
-            document.querySelectorAll('.clickable-img').forEach(img => {
-                img.addEventListener('click', function() {
-                    modalImage.src = this.src;
-                    imageModal.show();
-                });
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
             });
-        }
+        });
     </script>
 </body>
 </html>

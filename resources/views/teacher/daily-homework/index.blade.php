@@ -9,7 +9,6 @@
             <h1 class="page-title">
                 <i class="bi bi-journal-text me-2 text-primary"></i>Bài tập hàng ngày
             </h1>
-            <p class="text-muted mb-0 mt-2">Chọn lớp để quản lý và giao bài tập</p>
         </div>
         <div>
             <a href="{{ route('teacher.daily-homework.create') }}" class="btn btn-primary shadow-sm">

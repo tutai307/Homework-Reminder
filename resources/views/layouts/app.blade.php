@@ -4,7 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Homework Reminder System')</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>@yield('title', 'Homework Reminder - Quản lý Bài tập & Nhắc nhở Học tập')</title>
+    <meta name="description" content="@yield('meta_description', 'Homework Reminder - Nền tảng quản lý bài tập, thời khóa biểu và nhắc nhở học tập thông minh. Ứng dụng hỗ trợ học sinh, giáo viên và phụ huynh theo dõi tiến độ dễ dàng.')">
+    <meta name="keywords" content="@yield('meta_keywords', 'homework reminder, nhắc nhở bài tập, quản lý học tập, thời khóa biểu, Zalo nhắc lịch, bài tập về nhà, giáo dục số')">
+    <meta name="robots" content="@yield('meta_robots', 'index, follow')">
+    <meta name="author" content="Homework Reminder">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="@yield('title', 'Homework Reminder - Quản lý Bài tập & Nhắc nhở Học tập')">
+    <meta property="og:description" content="@yield('meta_description', 'Nền tảng quản lý bài tập, thời khóa biểu và nhắc nhở học tập thông minh. Ứng dụng hỗ trợ học sinh, giáo viên và phụ huynh theo dõi tiến độ dễ dàng.')">
+    <meta property="og:image" content="@yield('og_image', asset('storage/images/screenshot-main.png'))">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="@yield('title', 'Homework Reminder - Quản lý Bài tập & Nhắc nhở Học tập')">
+    <meta property="twitter:description" content="@yield('meta_description', 'Nền tảng quản lý bài tập, thời khóa biểu và nhắc nhở học tập thông minh. Ứng dụng hỗ trợ học sinh, giáo viên và phụ huynh theo dõi tiến độ dễ dàng.')">
+    <meta property="twitter:image" content="@yield('og_image', asset('storage/images/screenshot-main.png'))">
 
     <!-- Favicons -->
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">

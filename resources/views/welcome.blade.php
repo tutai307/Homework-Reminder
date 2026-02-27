@@ -3,7 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Homework-Reminder | Smart Academic Management</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>Homework Reminder | Quản lý Bài tập & Nhắc nhở Học tập</title>
+    <meta name="description" content="Homework Reminder - Nền tảng quản lý bài tập, thời khóa biểu và nhắc nhở học tập thông minh. Ứng dụng tối ưu giúp học sinh, giáo viên và phụ huynh theo dõi tiến độ một cách dễ dàng.">
+    <meta name="keywords" content="homework reminder, nhắc nhở bài tập, quản lý học tập, thời khóa biểu, Zalo nhắc lịch, bài tập về nhà, giáo dục số">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Homework Reminder">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url('/') }}">
+    <meta property="og:title" content="Homework Reminder | Quản lý Bài tập & Nhắc nhở Học tập">
+    <meta property="og:description" content="Nền tảng quản lý bài tập, thời khóa biểu và nhắc nhở học tập thông minh. Ứng dụng tối ưu giúp học sinh, giáo viên và phụ huynh theo dõi tiến độ một cách dễ dàng.">
+    <meta property="og:image" content="{{ asset('storage/images/screenshot-main.png') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url('/') }}">
+    <meta property="twitter:title" content="Homework Reminder | Quản lý Bài tập & Nhắc nhở Học tập">
+    <meta property="twitter:description" content="Nền tảng quản lý bài tập, thời khóa biểu và nhắc nhở học tập thông minh. Ứng dụng tối ưu giúp học sinh, giáo viên và phụ huynh theo dõi tiến độ một cách dễ dàng.">
+    <meta property="twitter:image" content="{{ asset('storage/images/screenshot-main.png') }}">
 
     <!-- Favicons -->
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">

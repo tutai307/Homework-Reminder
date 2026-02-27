@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('title', 'Thông tin lớp - ' . $class->name)
+@section('meta_description', 'Trang thông tin lớp ' . $class->name . ' - Xem chi tiết thời khóa biểu và nhắc nhở bài tập về nhà hàng ngày dành cho học sinh, phụ huynh.')
+@section('meta_keywords', 'thông tin lớp ' . $class->name . ', thời khóa biểu ' . $class->name . ', bài tập về nhà, homework reminder ' . $class->name)
 
 @section('content')
 <div class="page-header">

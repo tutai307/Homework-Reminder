@@ -1,7 +1,7 @@
 # 📚 Homework Reminder System
-> **🚀 Ready for 2025:** Hệ thống đã sẵn sàng và tương thích hoàn toàn với chương trình GDPT 2018 áp dụng cho mọi khối lớp cấp 2 từ năm học 2024-2025.
+> **🚀 Ready for 2026:** Hệ thống đã sẵn sàng và tương thích hoàn toàn với chương trình GDPT 2018 áp dụng cho mọi khối lớp cấp 2 từ năm học 2025-2026.
 
-Hệ thống quản lý thời khóa biểu và giao bài tập hàng ngày thông minh, hỗ trợ AI và kết nối phụ huynh qua Zalo.
+Hệ thống quản lý thời khóa biểu và giao bài tập hàng ngày thông minh, hỗ trợ AI và thông báo cho phụ huynh qua Zalo.
 
 ## ✨ Tính năng nổi bật
 
@@ -27,15 +27,15 @@ Hệ thống quản lý thời khóa biểu và giao bài tập hàng ngày thô
 ## 🛠 Công nghệ sử dụng
 - **Framework:** Laravel 10+
 - **Frontend:** Bootstrap 5, Select2, Flatpickr, SweetAlert2.
-- **AI Integration:** OpenAI API / Google Gemini API.
+- **AI Integration:** OpenAI API (sử dụng API của OpenRouter)
 
 ## 🚀 Cài đặt nhanh
 1. `composer install`
 2. `npm install && npm run build`
-3. `cp .env.example .env` (Cấu hình database và AI API Key)
+3. `cp .env.example .env`
 4. `php artisan key:generate`
 5. `php artisan migrate --seed`
 6. `php artisan serve`
 
 ---
-*Phát triển bởi Đội ngũ Công nghệ Lớp học.*
+*Phát triển bởi CBGV Nguyễn Thị Hường - lớp 7C - Trường TH và THCS Đông Mai*

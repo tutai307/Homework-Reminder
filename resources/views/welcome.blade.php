@@ -234,13 +234,7 @@
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0" data-aos="zoom-in">
                     <div class="position-relative">
-                        <img src="{{ asset('storage/images/screenshot-main.png') }}" class="img-fluid rounded-4 shadow-lg p-2 bg-white" alt="Dashboard Preview" onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80'">
-                        <div class="position-absolute bottom-0 end-0 bg-white p-3 rounded-4 shadow-sm mb-n4 me-n3 d-none d-md-block" style="width: 200px;">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <span class="fw-bold small">Dự án phi lợi nhuận</span>
-                            </div>
-                        </div>
+                        <img src="{{ asset('storage/images/test.jpg') }}" class="img-fluid rounded-4 shadow-lg p-2 bg-white" alt="Dashboard Preview" onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80'">
                     </div>
                 </div>
             </div>

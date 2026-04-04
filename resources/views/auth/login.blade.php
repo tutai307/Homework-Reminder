@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập | Homework Reminder Ecosystem</title>
     
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Đăng nhập vào hệ thống Homework Reminder để quản lý bài tập, thời khóa biểu và theo dõi tiến độ học sinh.">
+    <meta name="keywords" content="đăng nhập, login homework reminder, quản lý bài tập đăng nhập">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="Đăng nhập | Homework Reminder Ecosystem">
+    <meta property="og:description" content="Đăng nhập vào hệ thống Homework Reminder để quản lý bài tập, thời khóa biểu và theo dõi tiến độ học sinh.">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Đăng nhập | Homework Reminder Ecosystem">
+    <meta property="twitter:description" content="Đăng nhập vào hệ thống Homework Reminder để quản lý bài tập, thời khóa biểu và theo dõi tiến độ học sinh.">
     <!-- Favicons -->
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     

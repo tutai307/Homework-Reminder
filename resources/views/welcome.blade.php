@@ -208,8 +208,27 @@
         .footer-link { color: #94a3b8; text-decoration: none; display: block; margin-bottom: 0.75rem; transition: 0.3s; }
         .footer-link:hover { color: var(--primary-light); }
 
-        @media (max-width: 768px) {
-            .hero-title { font-size: 2.5rem; }
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                background: #ffffff;
+                padding: 1.5rem;
+                border-radius: 16px;
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+                margin-top: 1rem;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+            .navbar-nav .nav-item {
+                width: 100%;
+                text-align: center;
+                margin: 0.25rem 0;
+            }
+            .navbar-nav .btn-custom {
+                width: 100%;
+                display: block;
+                margin-top: 0.5rem;
+            }
+            .hero { padding: 120px 0 60px; }
+            .hero-title { font-size: 2.2rem; }
         }
     </style>
 </head>
@@ -219,7 +238,7 @@
     <nav class="navbar navbar-expand-lg fixed-top shadow-none" id="mainNav">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="bi bi- Mortarboard-fill me-2 text-primary"></i>HW REMINDER
+                <i class="bi bi-mortarboard-fill me-2 text-primary"></i>HW REMINDER
             </a>
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
                 <i class="bi bi-list fs-1 text-primary"></i>
@@ -248,7 +267,7 @@
                     <h1 class="hero-title">Quản lý bài tập thông minh <br><span class="text-gradient">Hỗ trợ học tập</span></h1>
                     <p class="text-muted mb-4 fs-5">Homework Reminder giúp học sinh bứt phá, giáo viên tối ưu thời gian và phụ huynh luôn an tâm.</p>
                     <div class="d-flex gap-3">
-                        <a href="{{ route('login') }}" class="btn btn-primary-custom btn-custom btn-lg">Bắt đầu miễn phí</a>
+                        <a href="{{ route('login') }}" class="btn btn-primary-custom btn-custom btn-lg">Bắt đầu</a>
                         <a href="#solution" class="btn btn-outline-primary btn-custom btn-lg">Khám phá</a>
                     </div>
                 </div>
@@ -424,7 +443,7 @@
             <div class="row g-5">
                 <div class="col-lg-5">
                     <a class="navbar-brand text-white mb-4 d-block" href="#">
-                        <i class="bi bi- Mortarboard-fill me-2"></i>HW REMINDER
+                        <i class="bi bi-mortarboard-fill me-2"></i>HW REMINDER
                     </a>
                     <p class="small mb-4">Dự án chuyển đổi số giáo dục phục vụ cộng đồng học sinh, giáo viên và phụ huynh học sinh. Chúng tôi mong muốn đóng góp một phần nhỏ vào sự phát triển của giáo dục Việt Nam.</p>
                 </div>
@@ -442,7 +461,7 @@
                 </div>
             </div>
             <div class="border-top border-secondary mt-5 pt-4 text-center">
-                <p class="small text-muted mb-0">&copy; {{ date('Y') }} Homework-Reminder Project. Phục vụ với sứ mệnh giáo dục không vì lợi nhuận.</p>
+                <p class="small mb-0">&copy; {{ date('Y') }} Homework-Reminder</p>
             </div>
         </div>
     </footer>

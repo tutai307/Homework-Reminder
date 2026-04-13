@@ -264,7 +264,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-6" data-aos="fade-right">
                     <span class="section-tag">Smart Academic Management</span>
-                    <h1 class="hero-title">Quản lý bài tập thông minh <br><span class="text-gradient">Hỗ trợ học tập</span></h1>
+                    <h1 class="hero-title">Quản lý bài tập thông minh <br><span class="text-gradient">Hỗ trợ Bài tập</span></h1>
                     <p class="text-muted mb-4 fs-5">Homework Reminder giúp học sinh bứt phá, giáo viên tối ưu thời gian và phụ huynh luôn an tâm.</p>
                     <div class="d-flex gap-3">
                         <a href="{{ route('login') }}" class="btn btn-primary-custom btn-custom btn-lg">Bắt đầu</a>

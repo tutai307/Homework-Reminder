@@ -194,7 +194,7 @@
     </div>
 
     <!-- Activity Logs Snapshot -->
-    <div class="row">
+    <div class="row d-none">
         <div class="col-lg-12">
             <div class="card shadow-sm mb-4 border-0" style="border-radius: 15px;">
                 <div class="card-header py-3 bg-white border-0 d-flex justify-content-between align-items-center">

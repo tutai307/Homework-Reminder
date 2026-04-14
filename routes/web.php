@@ -28,11 +28,13 @@ Route::post('logout', [\App\Http\Controllers\Auth\LoginController::class, 'logou
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('dashboard/class-homework', [\App\Http\Controllers\Admin\DashboardController::class, 'classHomework'])->name('dashboard.class-homework');
     Route::resource('classes', \App\Http\Controllers\Admin\ClassController::class);
     Route::resource('subjects', \App\Http\Controllers\Admin\SubjectController::class);
     Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
     Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
 });
 
 Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function () {

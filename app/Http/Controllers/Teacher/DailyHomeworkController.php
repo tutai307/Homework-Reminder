@@ -7,6 +7,7 @@ use App\Models\ClassModel;
 use App\Models\Homework;
 use App\Models\HomeworkItem;
 use App\Models\Timetable;
+use App\Models\ActivityLog;
 use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -828,6 +829,14 @@ class DailyHomeworkController extends Controller
             }
         }
 
+        // Ghi Audit Log hành động tạo bài tập
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'class_id' => $classId,
+            'action' => 'create_homework',
+            'description' => 'đã tạo bài tập mới',
+        ]);
+
         // Redirect back to the calendar/list context so the user immediately sees the result + toast
         return redirect()->route('teacher.daily-homework.list', [
                 'class_id' => $classId,
@@ -965,6 +974,14 @@ class DailyHomeworkController extends Controller
             }
         }
 
+        // Ghi Audit Log chỉnh sửa
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'class_id' => $homework->class_id,
+            'action' => 'update_homework',
+            'description' => 'đã cập nhật bài tập',
+        ]);
+
         // Redirect back to the calendar/list context so the user immediately sees the updated result + toast
         return redirect()->route('teacher.daily-homework.list', [
                 'class_id' => $homework->class_id,
@@ -1008,6 +1025,14 @@ class DailyHomeworkController extends Controller
         // Keep context for redirect after deletion
         $classId = $homework->class_id;
         $date = \Carbon\Carbon::parse($homework->date)->format('Y-m-d');
+
+        // Ghi Audit Log chức xóa
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'class_id' => $classId,
+            'action' => 'delete_homework',
+            'description' => 'đã xóa bản tin bài tập',
+        ]);
 
         // Xóa bài tập
         $homework->delete();

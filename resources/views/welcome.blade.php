@@ -107,7 +107,7 @@
         }
 
         .hero-title {
-            font-size: 3.5rem;
+            font-size: 2.8rem;
             font-weight: 800;
             line-height: 1.2;
             margin-bottom: 1.5rem;
@@ -264,7 +264,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-6" data-aos="fade-right">
                     <span class="section-tag">Smart Academic Management</span>
-                    <h1 class="hero-title">Quản lý bài tập thông minh <br><span class="text-gradient">Hỗ trợ Bài tập</span></h1>
+                    <h1 class="hero-title">Quản lý bài tập thông minh <br><span class="text-gradient">Hỗ trợ học tập</span></h1>
                     <p class="text-muted mb-4 fs-5">Homework Reminder giúp học sinh bứt phá, giáo viên tối ưu thời gian và phụ huynh luôn an tâm.</p>
                     <div class="d-flex gap-3">
                         <a href="{{ route('login') }}" class="btn btn-primary-custom btn-custom btn-lg">Bắt đầu</a>
@@ -451,17 +451,17 @@
                     <h6 class="footer-title">Kênh phân phối</h6>
                     <span class="footer-link">Public Class Portal</span>
                     <span class="footer-link">Admin Dashboard</span>
-                    <span class="footer-link">Nhóm lớp cộng đồng</span>
+                    <span class="footer-link">Nhóm lớp</span>
                 </div>
                 <div class="col-lg-3 text-lg-end">
                     <h6 class="footer-title">Đối tác & Phân khúc</h6>
                     <span class="footer-link">Học sinh THCS-THPT</span>
                     <span class="footer-link">Giáo viên & Nhà trường</span>
-                    <span class="footer-link">Phụ huynh nhận tin</span>
+                    <span class="footer-link">Phụ huynh học sinh</span>
                 </div>
             </div>
             <div class="border-top border-secondary mt-5 pt-4 text-center">
-                <p class="small mb-0">&copy; {{ date('Y') }} Homework-Reminder</p>
+                <p class="small mb-0">&copy; {{ date('Y') }} Homework-Reminder - Trường TH & THCS Đông Mai</p>
             </div>
         </div>
     </footer>

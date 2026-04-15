@@ -858,17 +858,6 @@ class DailyHomeworkController extends Controller
         }
         
         $class = $homework->classModel;
-
-        // Không cho phép sửa bài tập ở quá khứ
-        $today = now()->startOfDay();
-        $homeworkDate = \Carbon\Carbon::parse($homework->date)->startOfDay();
-        if ($homeworkDate->lt($today)) {
-            return redirect()->route('teacher.daily-homework.list', [
-                    'class_id' => $homework->class_id,
-                    'date' => $homeworkDate->format('Y-m-d'),
-                ])
-                ->with('error', 'Không thể sửa bài tập của những ngày đã qua.');
-        }
         
         // Kiểm tra quyền truy cập lớp
         if (!$user->hasAccessToClass($class->id)) {
@@ -921,17 +910,6 @@ class DailyHomeworkController extends Controller
             abort(403, 'Bạn không có quyền truy cập lớp này.');
         }
 
-        // Không cho phép sửa bài tập ở quá khứ
-        $today = now()->startOfDay();
-        $homeworkDate = \Carbon\Carbon::parse($homework->date)->startOfDay();
-        if ($homeworkDate->lt($today)) {
-            return redirect()->route('teacher.daily-homework.list', [
-                    'class_id' => $homework->class_id,
-                    'date' => $homeworkDate->format('Y-m-d'),
-                ])
-                ->with('error', 'Không thể sửa bài tập của những ngày đã qua.');
-        }
-        
         // Note: the form submits one "homework[item]" per timetable slot, even if content is empty.
         // So `content` must be nullable; we'll only persist items that actually have content.
         $validated = $request->validate([
@@ -1005,21 +983,6 @@ class DailyHomeworkController extends Controller
         // Kiểm tra quyền truy cập lớp
         if (!$user->hasAccessToClass($homework->class_id)) {
             abort(403, 'Bạn không có quyền truy cập lớp này.');
-        }
-        
-        // Cho phép xóa nếu là ngày hôm nay hoặc tương lai
-        $today = now()->startOfDay();
-        $homeworkDate = \Carbon\Carbon::parse($homework->date)->startOfDay();
-        
-        if ($homeworkDate->lessThan($today)) {
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không thể xóa bài tập trong quá khứ.',
-                ], 403);
-            }
-            return redirect()->back()
-                ->with('error', 'Không thể xóa bài tập trong quá khứ.');
         }
         
         // Keep context for redirect after deletion

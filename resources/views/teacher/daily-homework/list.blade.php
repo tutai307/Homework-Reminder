@@ -443,17 +443,15 @@
                         if (data.homework) {
                             html += `
                                 <div class="mt-5 pt-4 border-top d-flex gap-3 justify-content-center">
-                                    ${!isPast ? `
-                                        <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary px-4 rounded-pill">
-                                            <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
-                                        </a>
-                                        <button type="button" class="btn btn-danger px-4 rounded-pill" onclick="deleteHomework(${data.homework.id})">
-                                            <i class="bi bi-trash me-2"></i>Xóa bài tập
-                                        </button>
-                                    ` : '<span class="text-muted small italic">Không thể chỉnh sửa hoặc xóa bài tập trong quá khứ</span>'}
+                                    <a href="/teacher/daily-homework/${data.homework.id}/edit" class="btn btn-outline-primary px-4 rounded-pill">
+                                        <i class="bi bi-pencil me-2"></i>Chỉnh sửa bài tập
+                                    </a>
+                                    <button type="button" class="btn btn-danger px-4 rounded-pill" onclick="deleteHomework(${data.homework.id})">
+                                        <i class="bi bi-trash me-2"></i>Xóa bài tập
+                                    </button>
                                 </div>
                             `;
-                        } else if (!isPast) {
+                        } else {
                             html += `
                                 <div class="mt-5 pt-4 border-top text-center">
                                     <a href="/teacher/daily-homework/create?date=${date}&class_id={{ $class->id }}" class="btn btn-primary rounded-pill px-4 shadow-sm">

@@ -10,11 +10,6 @@
                 <i class="bi bi-journal-text me-2 text-primary"></i>Bài tập hàng ngày
             </h1>
         </div>
-        <div>
-            <a href="{{ route('teacher.daily-homework.create') }}" class="btn btn-primary shadow-sm">
-                <i class="bi bi-plus-circle me-2"></i>Tạo bài tập nhanh
-            </a>
-        </div>
     </div>
 </div>
 

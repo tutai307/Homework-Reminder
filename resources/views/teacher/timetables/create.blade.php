@@ -341,6 +341,9 @@ $(document).ready(function() {
     }
 
     function applyTimetableData(data) {
+        // Clear all select inputs first
+        $('.timetable-grid select').val('').trigger('change');
+
         for (let weekday in data) {
             for (let period in data[weekday]) {
                 const subjectId = data[weekday][period];

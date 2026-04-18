@@ -123,47 +123,64 @@ class AITimetableController extends Controller
     {
         $normalizedInput = $this->normalizeVietnamese($subjectName);
         
-        // Loại bỏ phần giáo viên hoặc mô tả sau dấu gạch ngang/dấu cách nếu có
-        $cleanedInput = str_replace('-', ' ', $subjectName);
-        $mainPart = preg_split('/[\s]/u', $cleanedInput, 2)[0];
-        $normalizedMainPart = $this->normalizeVietnamese($mainPart);
-        
-        // Alias map cho các môn học viết tắt
+        // 1. Ưu tiên so khớp TRỰC TIẾP toàn bộ tên (chính xác nhất)
+        foreach ($subjects as $subject) {
+            $normalizedOfficial = $this->normalizeVietnamese($subject->name);
+            if ($normalizedOfficial === $normalizedInput) {
+                return $subject->id;
+            }
+        }
+
+        // 2. So khớp qua Alias Map (toàn bộ input)
         $aliasMap = [
-            'toan' => ['toán', 't', 'toán học'],
-            'ngu van' => ['văn', 'nv', 'ngữ văn', 'soạn văn', 'tiếng việt'],
-            'tieng anh' => ['anh', 'av', 'english', 't.anh', 'tiếng anh', 't anh'],
+            'toan' => ['toán', 'toán học'],
+            'ngu van' => ['văn', 'ngữ văn', 'nv'],
+            'tieng anh' => ['anh', 'tiếng anh', 't.anh', 'anh văn', 'en'],
             'khoa hoc tu nhien' => ['khtn', 'tự nhiên', 'lý', 'hóa', 'sinh', 'vật lý', 'hóa học', 'sinh học'],
-            'lich su va dia li' => ['lsđl', 'sử địa', 'sử', 'địa', 'lịch sử', 'địa lý', 'ls', 'đl', 'ls-đl', 'lsđl-đ', 'lsđl-s', 'ls đl'],
-            'lich su' => ['sử', 'ls', 'lịch sử'],
-            'dia li' => ['địa', 'đl', 'địa lý'],
-            'giao duc cong dan' => ['gdcd', 'công dân', 'đạo đức'],
-            'tin hoc' => ['tin', 'th', 'tin học'],
-            'cong nghe' => ['cn', 'công nghệ', 'cnghe', 'cn nghệ'],
-            'gdtc' => ['gdtc', 'thể dục', 'td', 'tập thể dục', 'gdtc'],
-            'nghe thuat' => ['vẽ', 'nhạc', 'mỹ thuật', 'âm nhạc', 'mĩ thuật', 'nt', 'nt-ân', 'nt-mt', 'nt an', 'nt mt'],
-            'am nhac' => ['nhạc', 'an', 'âm nhạc'],
-            'mi thuat' => ['vẽ', 'mt', 'mỹ thuật', 'mĩ thuật'],
-            'hdtn hn' => ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'hdtn', 'hđtn hn', 'hdtn-4', 'hdtn 4'],
+            'lich su va dia li' => ['ls-đl', 'sử', 'địa', 'lsđl', 'lsđl-đ', 'lsđl-s', 'sử địa'],
+            'gdtc' => ['thể dục', 'gdTC', 'td', 'thể chất'],
+            'tin hoc' => ['tin', 'it', 'tin học'],
+            'cong nghe' => ['cn', 'công nghệ', 'cnghệ'],
+            'giao duc cong dan' => ['gdcd', 'công dân'],
+            'nghe thuat' => ['mỹ thuật', 'âm nhạc', 'nt', 'nghệ thuật', 'nt-mt', 'nt-an', 'mĩ thuật'],
+            'hdtn hn' => ['hđtn', 'trải nghiệm', 'hướng nghiệp', 'hdtn', 'hđtn hn', 'hdtn-4', 'hdtn 4', 'hđtn hn'],
             'giao duc dp' => ['gdđp', 'địa phương', 'gdđp', 'giáo dục đp', 'gddp'],
-            'sinh hoat' => ['shl', 'sinh hoạt', 'sh'],
+            'sinh hoat' => ['shl', 'sinh hoạt', 'sh', 'sinh hoạt lớp', 'chào cờ', 'sh dưới cờ', 'sinh hoạt lớp'],
         ];
 
         foreach ($subjects as $subject) {
             $normalizedOfficial = $this->normalizeVietnamese($subject->name);
-
-            // 1. So khớp trực tiếp (đầy đủ hoặc phần chính)
-            if ($normalizedOfficial === $normalizedInput || $normalizedOfficial === $normalizedMainPart) {
-                return $subject->id;
-            }
-
-            // 2. So khớp qua aliasMap
             foreach ($aliasMap as $officialAlias => $aliases) {
                 if ($this->normalizeVietnamese($officialAlias) === $normalizedOfficial) {
                     foreach ($aliases as $alias) {
-                        $normalizedAlias = $this->normalizeVietnamese($alias);
-                        if ($normalizedAlias === $normalizedInput || $normalizedAlias === $normalizedMainPart) {
+                        if ($this->normalizeVietnamese($alias) === $normalizedInput) {
                             return $subject->id;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. So khớp phần đầu (chỉ áp dụng nếu input dài và có phần phân tách)
+        $cleanedInput = str_replace('-', ' ', $subjectName);
+        $parts = preg_split('/[\s]/u', $cleanedInput, 2);
+        if (count($parts) > 1) {
+            $mainPart = $this->normalizeVietnamese($parts[0]);
+            foreach ($subjects as $subject) {
+                $normalizedOfficial = $this->normalizeVietnamese($subject->name);
+                if ($normalizedOfficial === $mainPart) {
+                    return $subject->id;
+                }
+                foreach ($aliasMap as $officialAlias => $aliases) {
+                    if ($this->normalizeVietnamese($officialAlias) === $normalizedOfficial) {
+                        foreach ($aliases as $alias) {
+                            if ($this->normalizeVietnamese($alias) === $mainPart) {
+                                // Cảnh báo: Tránh khớp nhầm "Sinh" trong "Sinh hoạt" với môn "Sinh học"
+                                if ($mainPart === 'sinh' && str_contains($normalizedInput, 'hoat')) {
+                                    continue;
+                                }
+                                return $subject->id;
+                            }
                         }
                     }
                 }

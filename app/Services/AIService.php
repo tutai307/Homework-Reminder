@@ -130,33 +130,46 @@ Văn bản đầu vào: \"{$text}\"";
     {
         $subjectsList = implode(', ', $subjects);
         
-        $prompt = "Bạn là chuyên gia trích xuất dữ liệu từ hình ảnh thời khóa biểu.
-NHIỆM VỤ: Trích xuất thời khóa biểu của lớp \"{$className}\".
+        $prompt = "You are a highly accurate Visual Data Extraction AI. Your task is to extract the school timetable for class \"{$className}\" from the provided image into a structured JSON format.
 
-QUY TẮC ĐỌC ẢNH (BẮT BUỘC):
-1. Đọc theo từng HÀNG NGANG (tương ứng với các TIẾT học).
-2. Hình ảnh thường chia thành 2 phần: \"Buổi sáng\" và \"Buổi chiều\".
-   - 5 hàng đầu tiên dưới tiêu đề Buổi sáng là Tiết 1, 2, 3, 4, 5.
-   - 5 hàng tiếp theo dưới tiêu đề Buổi chiều là Tiết 6, 7, 8, 9, 10.
-3. Với mỗi HÀNG (Tiết), hãy liệt kê môn học của các THỨ (từ Thứ 2 đến Thứ 7).
+### CRITICAL INSTRUCTIONS TO PREVENT COLUMN SHIFTING:
+1. **Grid Alignment**: The table has headers for 'THỨ' (days of the week) from 'THỨ 2' to 'THỨ 7'. There are 6 data columns in total.
+2. **Strict Row-by-Row Processing**: 
+   - Analyze each row (Period/Tiết) independently.
+   - **DO NOT SHIFT DATA**: If a cell is empty (no text), you MUST return `null`. Never move a subject from a later column to an earlier column to fill a gap.
+   - **Specific Case (Row 5)**: In the 'Buổi sáng' section, Row 5 often has empty cells for 'Thứ 2' and 'Thứ 3'. You MUST return `null` for these. Do not put 'Tiếng Anh' (from Thứ 4) into 'Thứ 2'.
 
-CẤU TRÚC JSON TRẢ VỀ (BẮT BUỘC):
+### SUBJECT MAPPING (VIETNAMESE):
+Map the detected text/abbreviations to these EXACT official names:
+- 'SHL', 'Sinh hoạt', 'Chào cờ', 'Lớp' -> 'Sinh hoạt'
+- 'Toán' -> 'Toán'
+- 'Văn', 'Ngữ văn' -> 'Ngữ văn'
+- 'T.Anh', 'Anh' -> 'Tiếng Anh'
+- 'KHTN' -> 'Khoa học tự nhiên'
+- 'LSĐL-Đ', 'LSĐL-S', 'Sử', 'Địa', 'LS-ĐL' -> 'Lịch sử và Địa lí'
+- 'HĐTNHN', 'HĐTN', 'HĐTN-4', 'Trải nghiệm' -> 'HĐTN HN'
+- 'GDTC', 'Thể dục' -> 'GDTC'
+- 'GDĐP', 'Địa phương' -> 'Giáo dục ĐP'
+- 'CNghệ', 'CN', 'Công nghệ' -> 'Công nghệ'
+- 'NT-MT', 'NT-AN', 'Mỹ thuật', 'Âm nhạc', 'NT' -> 'Nghệ thuật'
+- 'GDCD' -> 'Giáo dục công dân'
+- 'Tin' -> 'Tin học'
+
+### VALID SUBJECTS LIST:
+[{$subjectsList}]
+
+### ROW-SPECIFIC VERIFICATION:
+- **Tuesday Afternoon (Row 9)**: Look closely at the bottom of the 'Thứ 3' column in the 'Buổi chiều' section. You should see 'SHL'. This MUST be mapped to 'Sinh hoạt'. Do NOT repeat 'Khoa học tự nhiên' here.
+- **Strict Coordinate Check**: Row 9 is the 4th row under 'Buổi chiều'. Column 3 is 'THỨ 3'.
+
+### OUTPUT FORMAT:
+Return ONLY a valid JSON object. No explanations.
 {
-  \"1\": { \"2\": \"Môn A\", \"3\": \"Môn B\", \"4\": \"Môn C\", \"5\": \"Môn D\", \"6\": \"Môn E\", \"7\": \"Môn F\" }, // Tiết 1
-  \"2\": { \"2\": \"...\", \"3\": \"...\", ... }, // Tiết 2
+  \"1\": { \"2\": \"Subject Name\", \"3\": \"...\", \"4\": \"...\", \"5\": \"...\", \"6\": \"...\", \"7\": \"...\" },
   ...
-  \"10\": { \"2\": \"...\", ... } // Tiết 10
+  \"10\": { ... }
 }
-- Key cấp 1: Số TIẾT học (từ 1 đến 10).
-- Key cấp 2: Số THỨ (từ 2 đến 7).
-
-QUY TRÌNH ĐỐI SOÁT MÔN HỌC:
-- Danh sách môn hợp lệ: [{$subjectsList}].
-- Tên môn học phải khớp hoặc gần đúng nhất với danh sách trên (VD: 'LS-ĐL' -> 'Lịch sử và Địa lí').
-
-LƯU Ý:
-- Nếu ô trống, trả về null.
-- Chỉ trả về JSON thuần túy, không giải thích.";
+(Note: Periods 1-5 are Morning, 6-10 are Afternoon).";
 
         try {
             $apiKey = config('openai.api_key');
@@ -170,8 +183,22 @@ LƯU Ý:
                 'timeout' => 60, // Tăng timeout cho xử lý hình ảnh
             ]);
 
-            // Chuẩn bị payload cho GPT-4o-Vision (qua OpenRouter hoặc OpenAI trực tiếp)
             $messages = [
+                [
+                    'role' => 'system',
+                    'content' => "You are a professional Visual Data Extraction AI.
+### EXAMPLE OF CORRECT EXTRACTION FOR THIS STYLE:
+If Row 5 Morning has: [Empty, Empty, T.Anh, CNghệ, CNghệ]
+JSON should be: \"5\": { \"2\": null, \"3\": null, \"4\": \"Tiếng Anh\", \"5\": \"Công nghệ\", \"6\": \"Công nghệ\", \"7\": null }
+
+If Row 4 Afternoon (Tiết 9) has: [Empty, SHL, Empty, Empty, Empty]
+JSON should be: \"9\": { \"2\": null, \"3\": \"Sinh hoạt\", \"4\": null, \"5\": null, \"6\": null, \"7\": null }
+
+### RULES:
+1. DO NOT SHIFT COLUMNS.
+2. EMPTY = NULL.
+3. MAP ABBREVIATIONS: SHL -> Sinh hoạt, KHTN -> Khoa học tự nhiên, NT-MT/NT-AN -> Nghệ thuật."
+                ],
                 [
                     'role' => 'user',
                     'content' => [
@@ -182,7 +209,7 @@ LƯU Ý:
                         [
                             'type' => 'image_url',
                             'image_url' => [
-                                'url' => $imageBase64 // Hy vọng base64 đã bao gồm tiền tố data:image/...
+                                'url' => $imageBase64
                             ]
                         ]
                     ]
@@ -195,15 +222,16 @@ LƯU Ý:
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
-                    'model' => 'openai/gpt-4o', // Model này hỗ trợ Vision và rẻ/nhanh
+                    'model' => 'openai/gpt-4o',
                     'messages' => $messages,
-                    'temperature' => 0.1,
+                    'temperature' => 0,
                     'max_tokens' => 2000,
                 ]
             ]);
 
             $result = json_decode($response->getBody()->getContents(), true);
             $content = $result['choices'][0]['message']['content'] ?? '';
+            \Log::info('AI Timetable Response: ' . $content);
             
             // Trích xuất JSON từ markdown nếu cần
             if (preg_match('/\{.*\}/s', $content, $matches)) {
